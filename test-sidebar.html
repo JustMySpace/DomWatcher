@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>侧边栏测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-element {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .change-color {
+            background: #007bff;
+            color: white;
+        }
+        .change-text {
+            background: #28a745;
+            color: white;
+        }
+        .change-class {
+            background: #ffc107;
+            color: black;
+        }
+        .test-element.active {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 DOM属性监听器侧边栏测试页面</h1>
+
+    <p>这是一个用于测试独立侧边栏功能的页面。请按以下步骤操作：</p>
+
+    <ol>
+        <li>点击浏览器扩展图标，选择"打开侧边栏"</li>
+        <li>在侧边栏中点击"选择元素"按钮</li>
+        <li>点击下面的任意测试元素</li>
+        <li>在侧边栏中选择要监听的属性</li>
+        <li>点击"开始监听"按钮</li>
+        <li>使用下面的按钮改变元素属性，观察日志</li>
+    </ol>
+
+    <div id="test1" class="test-element" data-status="inactive" style="background-color: #f8f9fa;">
+        <h3>测试元素 1 - 颜色和文本变化</h3>
+        <p>当前状态: <span id="status1">inactive</span></p>
+        <button onclick="changeColor('test1')" class="change-color">改变背景色</button>
+        <button onclick="changeText('status1')" class="change-text">改变状态文本</button>
+        <button onclick="changeDataStatus('test1')" class="change-class">改变data-status</button>
+    </div>
+
+    <div id="test2" class="test-element" data-count="0" style="background-color: #fff3cd;">
+        <h3>测试元素 2 - 计数器和类名</h3>
+        <p>点击次数: <span id="counter">0</span></p>
+        <button onclick="incrementCount()" class="change-color">增加计数</button>
+        <button onclick="toggleClass('test2')" class="change-class">切换类名</button>
+    </div>
+
+    <div id="test3" class="test-element" custom-attribute="initial-value" style="background-color: #d4edda;">
+        <h3>测试元素 3 - 自定义属性</h3>
+        <p>自定义属性值: <span id="custom-value">initial-value</span></p>
+        <button onclick="changeCustomAttribute()" class="change-text">改变自定义属性</button>
+        <button onclick="changeTitle('test3')" class="change-color">改变标题</button>
+    </div>
+
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+        <h2>💡 测试提示</h2>
+        <ul>
+            <li><strong>颜色变化:</strong> 监听 style 属性</li>
+            <li><strong>文本变化:</strong> 监听文本内容相关的属性变化</li>
+            <li><strong>类名变化:</strong> 监听 class 属性</li>
+            <li><strong>自定义属性:</strong> 监听 data-* 或自定义属性</li>
+            <li><strong>侧边栏持久化:</strong> 关闭并重新打开侧边栏，观察日志是否保留</li>
+        </ul>
+    </div>
+
+    <script>
+        let counter = 0;
+        let colorIndex = 0;
+        const colors = ['#f8f9fa', '#e3f2fd', '#fff3cd', '#d4edda', '#f8d7da', '#e2e3e5'];
+        const statusValues = ['inactive', 'active', 'pending', 'completed', 'error'];
+        const customValues = ['initial-value', 'updated', 'modified', 'changed', 'altered'];
+
+        function changeColor(elementId) {
+            const element = document.getElementById(elementId);
+            colorIndex = (colorIndex + 1) % colors.length;
+            element.style.backgroundColor = colors[colorIndex];
+            console.log(`颜色已改变为: ${colors[colorIndex]}`);
+        }
+
+        function changeText(spanId) {
+            const span = document.getElementById(spanId);
+            const currentIndex = statusValues.indexOf(span.textContent);
+            const nextIndex = (currentIndex + 1) % statusValues.length;
+            span.textContent = statusValues[nextIndex];
+            console.log(`状态文本已改变为: ${statusValues[nextIndex]}`);
+        }
+
+        function changeDataStatus(elementId) {
+            const element = document.getElementById(elementId);
+            const currentStatus = element.getAttribute('data-status');
+            const currentIndex = statusValues.indexOf(currentStatus);
+            const nextIndex = (currentIndex + 1) % statusValues.length;
+            element.setAttribute('data-status', statusValues[nextIndex]);
+            console.log(`data-status已改变为: ${statusValues[nextIndex]}`);
+        }
+
+        function incrementCount() {
+            counter++;
+            document.getElementById('counter').textContent = counter;
+            document.getElementById('test2').setAttribute('data-count', counter);
+            console.log(`计数已增加到: ${counter}`);
+        }
+
+        function toggleClass(elementId) {
+            const element = document.getElementById(elementId);
+            element.classList.toggle('active');
+            console.log(`类名已切换，当前类: ${element.className}`);
+        }
+
+        function changeCustomAttribute() {
+            const element = document.getElementById('test3');
+            const currentValue = element.getAttribute('custom-attribute');
+            const currentIndex = customValues.indexOf(currentValue);
+            const nextIndex = (currentIndex + 1) % customValues.length;
+            const newValue = customValues[nextIndex];
+            element.setAttribute('custom-attribute', newValue);
+            document.getElementById('custom-value').textContent = newValue;
+            console.log(`自定义属性已改变为: ${newValue}`);
+        }
+
+        function changeTitle(elementId) {
+            const element = document.getElementById(elementId);
+            const titles = ['测试元素 3 - 自定义属性', 'Modified Test Element 3', 'Updated Element', 'Changed Title'];
+            const currentTitle = element.querySelector('h3').textContent;
+            const currentIndex = titles.indexOf(currentTitle);
+            const nextIndex = (currentIndex + 1) % titles.length;
+            element.querySelector('h3').textContent = titles[nextIndex];
+            element.setAttribute('title', titles[nextIndex]);
+            console.log(`标题已改变为: ${titles[nextIndex]}`);
+        }
+
+        // 页面加载完成后的提示
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('测试页面已加载，可以开始测试DOM属性监听器侧边栏功能');
+        });
+    </script>
+</body>
+</html>

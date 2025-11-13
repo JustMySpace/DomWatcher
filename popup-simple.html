@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器</title>
+    <style>
+        body {
+            width: 350px;
+            height: 450px;
+            margin: 0;
+            padding: 16px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .control-section {
+            background-color: white;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background-color: #4CAF50;
+        }
+
+        .status-inactive {
+            background-color: #f44336;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: calc(50% - 8px);
+        }
+
+        .btn-primary { background-color: #2196F3; color: white; }
+        .btn-success { background-color: #4CAF50; color: white; }
+        .btn-danger { background-color: #f44336; color: white; }
+        .btn-warning { background-color: #FF9800; color: white; }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .element-info {
+            background-color: #e3f2fd;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 4px;
+            border-left: 4px solid #2196F3;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        select {
+            padding: 8px;
+            margin: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .log-container {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-height: 200px;
+        }
+
+        .log-header {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .log-item {
+            padding: 4px;
+            margin: 2px 0;
+            border-left: 2px solid #2196F3;
+            background-color: #f8f9fa;
+            font-size: 11px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .status-text {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔍 DOM监听器</h2>
+    </div>
+
+    <div class="control-section">
+        <div class="status-text">
+            <span class="status-indicator status-inactive" id="statusIndicator"></span>
+            <span id="statusText">未开始监听</span>
+        </div>
+
+        <div id="elementInfo" class="element-info">
+            <div id="elementInfoContent"></div>
+        </div>
+
+        <div>
+            <button id="startCapture" class="btn-primary">🎯 选择元素</button>
+            <button id="startListening" class="btn-success" disabled>▶️ 开始</button>
+            <button id="stopListening" class="btn-danger" disabled>⏹️ 停止</button>
+            <button id="clearLogs" class="btn-warning">🗑️ 清空</button>
+        </div>
+    </div>
+
+    <div class="log-container">
+        <div class="log-header">
+            <span>📋 监听日志</span>
+            <span id="logCount">(0)</span>
+        </div>
+        <div id="logContent" class="log-content">
+            <div class="empty-state">暂无日志数据</div>
+        </div>
+    </div>
+
+    <script src="popup-simple.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器 - 简单测试</title>
+    <style>
+        body {
+            width: 350px;
+            height: 400px;
+            margin: 0;
+            padding: 16px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            background-color: #2196F3;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background-color: #1976d2;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .status {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        .log {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
+        .info {
+            background: #e3f2fd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1976d2;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔍 DOM监听器</h2>
+    </div>
+
+    <div class="info" id="info">
+        调试信息加载中...
+    </div>
+
+    <div class="status" id="status">
+        等待测试...
+    </div>
+
+    <button id="testButton" onclick="testButtonClick()">🧪 测试按钮点击</button>
+    <button id="testAPI" onclick="testAPI()">🔍 测试Chrome API</button>
+    <button id="testSimple" onclick="testSimple()">✅ 简单测试</button>
+    <button id="testAlert" onclick="testAlert()">⚠️ 测试Alert</button>
+
+    <div class="log" id="log">
+        等待日志...
+    </div>
+
+    <script>
+        // 基本日志函数
+        function addLog(text) {
+            const log = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const newLog = `[${timestamp}] ${text}<br>` + log.innerHTML;
+            log.innerHTML = newLog;
+            console.log('Popup日志:', text);
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+            console.log('状态更新:', text);
+        }
+
+        function updateInfo(text) {
+            document.getElementById('info').textContent = text;
+            console.log('信息更新:', text);
+        }
+
+        // 测试函数
+        function testButtonClick() {
+            addLog('✅ 测试按钮点击成功！');
+            updateStatus('按钮点击正常');
+        }
+
+        function testSimple() {
+            addLog('✅ 简单测试成功！');
+            updateStatus('简单功能正常');
+        }
+
+        function testAlert() {
+            if (confirm('Alert测试正常吗？')) {
+                addLog('✅ Alert测试成功！');
+                updateStatus('Alert正常');
+            } else {
+                addLog('⚠️ Alert测试取消');
+                updateStatus('Alert被取消');
+            }
+        }
+
+        function testAPI() {
+            addLog('开始测试Chrome API...');
+
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                addLog('✅ Chrome API可用');
+
+                try {
+                    chrome.runtime.id && addLog(`✅ 扩展ID: ${chrome.runtime.id.substring(0, 8)}...`);
+
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (chrome.runtime.lastError) {
+                            addLog('❌ tabs.query错误: ' + chrome.runtime.lastError.message);
+                        } else if (tabs && tabs[0]) {
+                            addLog(`✅ 当前标签ID: ${tabs[0].id}`);
+                            addLog(`✅ 当前URL: ${tabs[0].url.substring(0, 50)}...`);
+                            updateStatus('Chrome API测试成功');
+                        } else {
+                            addLog('⚠️ 无法获取标签信息');
+                        }
+                    });
+                } catch (error) {
+                    addLog('❌ Chrome API测试失败: ' + error.message);
+                }
+            } else {
+                addLog('❌ Chrome API不可用');
+            }
+        }
+
+        // 页面加载时的初始化
+        window.addEventListener('load', function() {
+            addLog('🎉 页面加载完成！');
+            updateInfo('页面加载正常，JavaScript工作正常');
+            updateStatus('准备测试');
+        });
+
+        // DOM内容加载完成时的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('📋 DOM内容加载完成！');
+        });
+
+        // 立即执行的测试
+        (function() {
+            addLog('🚀 脚本开始执行！');
+            updateInfo('脚本正在执行中...');
+        })();
+    </script>
+</body>
+</html>

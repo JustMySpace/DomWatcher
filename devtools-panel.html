@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器面板</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #252526;
+            padding: 8px 12px;
+            border-bottom: 1px solid #3e3e42;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header h3 {
+            margin: 0;
+            font-size: 13px;
+            color: #cccccc;
+        }
+
+        .controls {
+            padding: 12px;
+            background-color: #252526;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: 1px solid #3e3e42;
+            background-color: #3c3c3c;
+            color: #d4d4d4;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        button:hover {
+            background-color: #4a4a4a;
+        }
+
+        button:active {
+            background-color: #2a2a2a;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background-color: #007acc;
+            color: white;
+            border-color: #007acc;
+        }
+
+        button.primary:hover {
+            background-color: #005a9e;
+        }
+
+        button.success {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        button.danger {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        button.warning {
+            background-color: #ffc107;
+            color: #212529;
+            border-color: #ffc107;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-active {
+            background-color: #28a745;
+            box-shadow: 0 0 4px #28a745;
+        }
+
+        .status-inactive {
+            background-color: #dc3545;
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .element-info {
+            background-color: #2d2d30;
+            padding: 8px;
+            margin: 8px 0;
+            border-left: 3px solid #007acc;
+            border-radius: 2px;
+            font-size: 11px;
+            display: none;
+        }
+
+        .element-info.visible {
+            display: block;
+        }
+
+        .element-info-title {
+            color: #569cd6;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        select {
+            padding: 4px 6px;
+            border: 1px solid #3e3e42;
+            background-color: #3c3c3c;
+            color: #d4d4d4;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            background-color: #252526;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #3e3e42;
+            background-color: #3c3c3c;
+            color: #d4d4d4;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 11px;
+            box-sizing: border-box;
+        }
+
+        .search-box input::placeholder {
+            color: #8c8c8c;
+        }
+
+        .log-container {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+        }
+
+        .log-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #2a2a2a;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .log-item:hover {
+            background-color: #2a2a2a;
+        }
+
+        .log-item.highlight {
+            background-color: #3a3a00;
+        }
+
+        .log-time {
+            color: #8c8c8c;
+        }
+
+        .log-element {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        .log-attribute {
+            color: #c586c0;
+            font-weight: bold;
+        }
+
+        .log-value {
+            color: #ce9178;
+        }
+
+        .log-type {
+            color: #608b4e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8c8c8c;
+            font-style: italic;
+        }
+
+        .floating-window-btn {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+        }
+
+        .floating-window-btn:hover {
+            background-color: #e68900;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #424242;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f4f4f;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h3>🔍 DOM属性监听器</h3>
+    </div>
+
+    <div class="controls">
+        <div class="control-row">
+            <span class="status-indicator status-inactive" id="statusIndicator"></span>
+            <span class="status-text" id="statusText">未开始监听</span>
+        </div>
+
+        <div class="control-row">
+            <button id="startCapture" class="primary">🎯 选择元素</button>
+            <button id="startListening" disabled class="success">▶️ 开始监听</button>
+            <button id="stopListening" disabled class="danger">⏹️ 停止监听</button>
+            <button id="clearLogs" class="warning">🗑️ 清空日志</button>
+            <button id="openFloating" class="floating-window-btn">🪟 浮动窗口</button>
+        </div>
+
+        <div id="elementInfo" class="element-info">
+            <div class="element-info-title">已选择元素</div>
+            <div id="elementInfoContent"></div>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchBox" placeholder="🔍 搜索元素、属性值或时间...">
+    </div>
+
+    <div id="logContent" class="log-container">
+        <div class="empty-state">暂无日志数据</div>
+    </div>
+
+    <script src="devtools-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复杂页面选择器测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .complex-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .test-element {
+            margin: 10px 0;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .test-element:hover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .test-element.selected {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .dynamic-css {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .debug-panel {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .selector-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .valid { border-left: 4px solid #28a745; }
+        .invalid { border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="complex-container">
+        <h1>🔍 复杂页面选择器测试</h1>
+
+        <div class="debug-panel">
+            <h3>🎯 选择器分析器</h3>
+            <div class="selector-display" id="currentSelector">
+                <strong>当前选择器:</strong> <span id="selectorText">未选择元素</span>
+            </div>
+            <div class="selector-display" id="strategyInfo">
+                <strong>使用策略:</strong> <span id="strategyText">等待选择</span>
+            </div>
+            <button onclick="testCurrentSelector()" class="btn-primary">测试当前选择器</button>
+            <button onclick="showAllStrategies()" class="btn-success">显示所有策略</button>
+        </div>
+
+        <!-- 测试区域1: 动态CSS类名 -->
+        <div class="test-section">
+            <h3>📱 测试区域1: 动态CSS类名 (类似React/Vue)</h3>
+            <div id="app-root" class="css-abc123">
+                <div class="container css-def456">
+                    <div class="form css-ghi789">
+                        <div class="form-group css-jkl012">
+                            <label>用户名:</label>
+                            <input id="username-input" type="text" class="form-control css-mno345 is-focused" placeholder="请输入用户名">
+                        </div>
+                        <div class="form-group css-pqr678">
+                            <label>密码:</label>
+                            <input type="password" class="form-control css-stu901" placeholder="请输入密码">
+                        </div>
+                        <button class="btn btn-primary css-vwx234">登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试区域2: 复杂嵌套结构 -->
+        <div class="test-section">
+            <h3>🏗️ 测试区域2: 复杂嵌套结构</h3>
+            <div class="dashboard">
+                <div class="sidebar">
+                    <nav class="menu">
+                        <ul class="menu-list">
+                            <li class="menu-item active"><a href="#">首页</a></li>
+                            <li class="menu-item"><a href="#">产品</a></li>
+                            <li class="menu-item"><a href="#">关于</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="main-content">
+                    <div class="widget">
+                        <h4 class="widget-title">统计信息</h4>
+                        <div class="widget-content">
+                            <div class="stat-item">
+                                <span class="stat-label">用户数:</span>
+                                <span class="stat-value" data-stat="users">1,234</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">订单数:</span>
+                                <span class="stat-value" data-stat="orders">567</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试区域3: 没有ID/类的元素 -->
+        <div class="test-section">
+            <h3>🎲 测试区域3: 没有ID/类的元素</h3>
+            <section>
+                <article>
+                    <div>
+                        <h4>第一个标题</h4>
+                        <p>这是第一段内容</p>
+                    </div>
+                    <div>
+                        <h4>第二个标题</h4>
+                        <p>这是第二段内容</p>
+                    </div>
+                    <div>
+                        <h4>第三个标题</h4>
+                        <p>这是第三段内容</p>
+                    </div>
+                </article>
+            </section>
+        </div>
+
+        <!-- 测试区域4: 表格元素 -->
+        <div class="test-section">
+            <h3>📊 测试区域4: 表格元素</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th data-column="name">姓名</th>
+                        <th data-column="age">年龄</th>
+                        <th data-column="city">城市</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-row="1">
+                        <td>张三</td>
+                        <td>25</td>
+                        <td>北京</td>
+                        <td><button class="btn-edit" data-id="1">编辑</button></td>
+                    </tr>
+                    <tr data-row="2">
+                        <td>李四</td>
+                        <td>30</td>
+                        <td>上海</td>
+                        <td><button class="btn-edit" data-id="2">编辑</button></td>
+                    </tr>
+                    <tr data-row="3">
+                        <td>王五</td>
+                        <td>28</td>
+                        <td>广州</td>
+                        <td><button class="btn-edit" data-id="3">编辑</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let currentElement = null;
+        let allStrategies = [];
+
+        // 模拟CSS选择器策略生成
+        function generateSelectors(element) {
+            const strategies = [];
+
+            // 策略1: ID选择器
+            if (element.id) {
+                strategies.push({
+                    name: 'ID选择器',
+                    selector: `#${element.id}`,
+                    priority: 1
+                });
+            }
+
+            // 策略2: 稳定类名选择器
+            if (element.className) {
+                const classes = element.className.trim().split(/\s+/);
+                const stableClasses = classes.filter(cls => {
+                    return !(
+                        cls.match(/^css-[a-f0-9]+$/) ||
+                        cls.match(/[a-f0-9]{6,}/) ||
+                        cls.includes('is-focused') ||
+                        cls.includes('active') ||
+                        cls.includes('hover')
+                    );
+                });
+
+                if (stableClasses.length > 0) {
+                    const tagName = element.tagName.toLowerCase();
+                    strategies.push({
+                        name: '稳定类名选择器',
+                        selector: `${tagName}.${stableClasses.slice(0, 2).join('.')}`,
+                        priority: 2
+                    });
+                }
+            }
+
+            // 策略3: 属性选择器
+            const stableAttributes = ['data-testid', 'data-cy', 'name', 'type', 'role', 'data-stat', 'data-row', 'data-id'];
+            for (const attr of stableAttributes) {
+                const value = element.getAttribute(attr);
+                if (value) {
+                    const tagName = element.tagName.toLowerCase();
+                    strategies.push({
+                        name: `属性选择器 (${attr})`,
+                        selector: `${tagName}[${attr}="${value}"]`,
+                        priority: 3
+                    });
+                    break;
+                }
+            }
+
+            // 策略4: nth-child选择器
+            if (element.parentNode) {
+                const siblings = Array.from(element.parentNode.children);
+                const index = siblings.indexOf(element) + 1;
+                const tagName = element.tagName.toLowerCase();
+                strategies.push({
+                    name: 'nth-child选择器',
+                    selector: `${tagName}:nth-child(${index})`,
+                    priority: 4
+                });
+            }
+
+            // 策略5: 文本内容选择器
+            const text = element.textContent?.trim();
+            if (text && text.length < 50 && text.match(/^[a-zA-Z0-9\u4e00-\u9fa5\s\-_,.]+$/)) {
+                const tagName = element.tagName.toLowerCase();
+                strategies.push({
+                    name: '文本内容选择器',
+                    selector: `${tagName}[text="${text}"]`,
+                    priority: 5
+                });
+            }
+
+            // 按优先级排序
+            strategies.sort((a, b) => a.priority - b.priority);
+            return strategies;
+        }
+
+        // 验证选择器
+        function validateSelector(selector, targetElement) {
+            try {
+                // 特殊处理文本选择器
+                if (selector.includes('[text=')) {
+                    return validateTextSelector(selector, targetElement);
+                }
+
+                const elements = document.querySelectorAll(selector);
+                return elements.length === 1 && elements[0] === targetElement;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // 验证文本选择器
+        function validateTextSelector(selector, targetElement) {
+            try {
+                const match = selector.match(/^(.+)\[text="([^"]+)"\]$/);
+                if (!match) return false;
+
+                const [, tagName, text] = match;
+                const elements = document.querySelectorAll(tagName);
+                for (const element of elements) {
+                    if (element.textContent?.trim() === text && element === targetElement) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // 选择元素
+        function selectElement(element) {
+            // 移除之前的选中状态
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+
+            // 添加选中状态
+            element.classList.add('selected');
+            currentElement = element;
+
+            // 生成选择器策略
+            allStrategies = generateSelectors(element);
+
+            // 找到第一个有效的选择器
+            let validSelector = null;
+            let usedStrategy = null;
+
+            for (const strategy of allStrategies) {
+                if (validateSelector(strategy.selector, element)) {
+                    validSelector = strategy.selector;
+                    usedStrategy = strategy.name;
+                    break;
+                }
+            }
+
+            // 显示结果
+            document.getElementById('selectorText').textContent = validSelector || '无有效选择器';
+            document.getElementById('strategyText').textContent = usedStrategy || '无可用策略';
+
+            const selectorDiv = document.getElementById('currentSelector');
+            selectorDiv.className = 'selector-display ' + (validSelector ? 'valid' : 'invalid');
+
+            // 发送调试信息
+            try {
+                window.postMessage({
+                    type: 'DOM_WATCHER_DEBUG',
+                    selector: validSelector,
+                    element: element.tagName.toLowerCase(),
+                    strategies: allStrategies
+                }, '*');
+            } catch (error) {
+                console.warn('发送调试信息失败:', error);
+            }
+        }
+
+        // 测试当前选择器
+        function testCurrentSelector() {
+            const selector = document.getElementById('selectorText').textContent;
+            if (!selector || selector === '未选择元素') {
+                alert('请先选择一个元素');
+                return;
+            }
+
+            const isValid = validateSelector(selector, currentElement);
+            alert(`选择器 "${selector}" ${isValid ? '有效' : '无效'}`);
+        }
+
+        // 显示所有策略
+        function showAllStrategies() {
+            if (allStrategies.length === 0) {
+                alert('请先选择一个元素');
+                return;
+            }
+
+            let message = '所有选择器策略:\n\n';
+            allStrategies.forEach((strategy, index) => {
+                const isValid = validateSelector(strategy.selector, currentElement);
+                message += `${index + 1}. ${strategy.name} (优先级: ${strategy.priority})\n`;
+                message += `   选择器: ${strategy.selector}\n`;
+                message += `   状态: ${isValid ? '✅ 有效' : '❌ 无效'}\n\n`;
+            });
+
+            alert(message);
+        }
+
+        // 添加点击事件监听
+        document.addEventListener('click', function(e) {
+            // 忽略按钮点击
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                return;
+            }
+
+            // 忽略调试面板点击
+            if (e.target.closest('.debug-panel')) {
+                return;
+            }
+
+            selectElement(e.target);
+        });
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('复杂页面测试已加载');
+            console.log('点击任何元素来测试选择器生成');
+        });
+
+        // 全局函数供调试使用
+        window.testCurrentSelector = testCurrentSelector;
+        window.showAllStrategies = showAllStrategies;
+        window.allStrategies = allStrategies;
+    </script>
+</body>
+</html>

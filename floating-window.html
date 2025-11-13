@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器 - 浮动窗口</title>
+</head>
+<body>
+    <div class="floating-window">
+        <div class="window-header">
+            <span class="window-title">🔍 DOM监听器</span>
+            <div class="window-controls">
+                <button class="minimize-btn" title="最小化">−</button>
+                <button class="close-btn" title="关闭">×</button>
+            </div>
+        </div>
+
+        <div class="window-content">
+            <div class="status-section">
+                <div class="status-row">
+                    <span class="status-indicator status-inactive" id="statusIndicator"></span>
+                    <span class="status-text" id="statusText">未开始监听</span>
+                </div>
+
+                <div class="control-row">
+                    <button id="startCapture" class="btn-primary">🎯 选择元素</button>
+                    <button id="startListening" disabled class="btn-success">▶️ 开始</button>
+                    <button id="stopListening" disabled class="btn-danger">⏹️ 停止</button>
+                </div>
+
+                <div id="elementInfo" class="element-info" style="display: none;">
+                    <div class="element-info-title">已选择元素</div>
+                    <div id="elementInfoContent"></div>
+                </div>
+            </div>
+
+            <div class="log-section">
+                <div class="log-header">
+                    <span>📋 日志</span>
+                    <button id="clearLogs" class="btn-warning">清空</button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchBox" placeholder="搜索...">
+                </div>
+
+                <div id="logContent" class="log-content">
+                    <div class="empty-state">暂无日志</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="floating-window.js"></script>
+</body>
+</html>

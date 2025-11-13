@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS选择器调试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-element {
+            margin: 15px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .test-element:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        }
+        .test-element.selected {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: black;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            border-left: 4px solid #007bff;
+        }
+        #currentSelector {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 CSS选择器调试页面</h1>
+
+    <div class="debug-info" id="currentSelector">
+        <strong>当前选择器:</strong> <span id="selectorDisplay">未选择</span>
+    </div>
+
+    <div class="debug-info">
+        <strong>测试说明:</strong>
+        <ol>
+            <li>打开扩展侧边栏</li>
+            <li>点击"选择元素"按钮</li>
+            <li>点击下面的任意元素</li>
+            <li>观察这里显示的CSS选择器</li>
+            <li>在开发者工具中测试选择器: <code>document.querySelector('选择器')</code></li>
+        </ol>
+    </div>
+
+    <!-- 简单的ID选择器测试 -->
+    <div id="simple-test" class="test-element">
+        <h3>简单ID测试元素</h3>
+        <p>这个元素有ID: <code>simple-test</code></p>
+        <button onclick="changeAttribute('simple-test')" class="btn-primary">改变class属性</button>
+    </div>
+
+    <!-- 带类的元素测试 -->
+    <div class="test-element container-item special">
+        <h3>带多个类的元素</h3>
+        <p>类名: <code>container-item special</code></p>
+        <button onclick="changeDataAttribute(this.parentElement)" class="btn-success">改变data属性</button>
+    </div>
+
+    <!-- 嵌套元素测试 -->
+    <div class="container">
+        <div class="test-element nested">
+            <h3>嵌套元素测试</h3>
+            <p>在.container内的.test-element.nested</p>
+            <button onclick="changeStyle(this.parentElement)" class="btn-warning">改变style属性</button>
+        </div>
+    </div>
+
+    <!-- 无ID无类元素测试 -->
+    <div>
+        <section>
+            <article>
+                <div class="test-element">
+                    <h3>深层嵌套无ID元素</h3>
+                    <p>在div > section > article > div结构中</p>
+                    <button onclick="changeTitle(this.parentElement)" class="btn-danger">改变title属性</button>
+                </div>
+            </article>
+        </section>
+    </div>
+
+    <!-- 相同类名元素测试 -->
+    <div class="test-element duplicate">
+        <h3>第一个重复元素</h3>
+        <p>类名: <code>duplicate</code> (第一个)</p>
+        <button onclick="addCustomAttr(this.parentElement, 1)" class="btn-primary">添加自定义属性</button>
+    </div>
+
+    <div class="test-element duplicate">
+        <h3>第二个重复元素</h3>
+        <p>类名: <code>duplicate</code> (第二个)</p>
+        <button onclick="addCustomAttr(this.parentElement, 2)" class="btn-primary">添加自定义属性</button>
+    </div>
+
+    <div class="test-element duplicate">
+        <h3>第三个重复元素</h3>
+        <p>类名: <code>duplicate</code> (第三个)</p>
+        <button onclick="addCustomAttr(this.parentElement, 3)" class="btn-primary">添加自定义属性</button>
+    </div>
+
+    <script>
+        // 显示当前选择的CSS选择器
+        function updateSelectorDisplay(selector) {
+            document.getElementById('selectorDisplay').textContent = selector || '未选择';
+        }
+
+        // 测试选择器是否能找到元素
+        function testSelector(selector) {
+            if (!selector) return false;
+            try {
+                const element = document.querySelector(selector);
+                console.log('测试选择器:', selector, '结果:', element);
+                return !!element;
+            } catch (error) {
+                console.error('选择器测试失败:', selector, error);
+                return false;
+            }
+        }
+
+        // 改变class属性
+        function changeAttribute(elementId) {
+            const element = document.getElementById(elementId);
+            element.className = element.className === 'test-element'
+                ? 'test-element modified'
+                : 'test-element';
+            console.log('class已改变为:', element.className);
+        }
+
+        // 改变data属性
+        function changeDataAttribute(element) {
+            const currentStatus = element.getAttribute('data-status') || 'inactive';
+            const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
+            element.setAttribute('data-status', newStatus);
+            console.log('data-status已改变为:', newStatus);
+        }
+
+        // 改变style属性
+        function changeStyle(element) {
+            const colors = ['#f8f9fa', '#e3f2fd', '#fff3cd', '#d4edda', '#f8d7da'];
+            const currentBg = element.style.backgroundColor;
+            let nextColor = colors[0];
+            for (let i = 0; i < colors.length; i++) {
+                if (colors[i] === currentBg || colors[i].toLowerCase() === currentBg) {
+                    nextColor = colors[(i + 1) % colors.length];
+                    break;
+                }
+            }
+            element.style.backgroundColor = nextColor;
+            console.log('style.background-color已改变为:', nextColor);
+        }
+
+        // 改变title属性
+        function changeTitle(element) {
+            const titles = ['默认标题', '已修改的标题', '再次修改的标题', '最终标题'];
+            const currentTitle = element.getAttribute('title') || '默认标题';
+            const currentIndex = titles.indexOf(currentTitle);
+            const nextTitle = titles[(currentIndex + 1) % titles.length];
+            element.setAttribute('title', nextTitle);
+            console.log('title已改变为:', nextTitle);
+        }
+
+        // 添加自定义属性
+        function addCustomAttr(element, index) {
+            const value = `custom-value-${index}-${Date.now()}`;
+            element.setAttribute('data-custom', value);
+            console.log(`data-custom已设置为: ${value}`);
+        }
+
+        // 添加CSS测试功能到全局作用域，供调试使用
+        window.testSelector = testSelector;
+        window.updateSelectorDisplay = updateSelectorDisplay;
+
+        // 监听来自内容脚本的选择器更新
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'DOM_WATCHER_DEBUG') {
+                if (event.data.selector) {
+                    updateSelectorDisplay(event.data.selector);
+                    const isValid = testSelector(event.data.selector);
+                    document.getElementById('selectorDisplay').style.color = isValid ? 'green' : 'red';
+                }
+            }
+        });
+
+        // 页面加载完成提示
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('CSS选择器调试页面已加载');
+            console.log('使用以下命令测试选择器:');
+            console.log('testSelector("选择器") - 测试选择器是否有效');
+            console.log('updateSelectorDisplay("选择器") - 更新显示的选择器');
+        });
+    </script>
+</body>
+</html>

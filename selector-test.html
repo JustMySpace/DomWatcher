@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择器测试 - 模拟复杂页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .app {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .debug-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            border-left: 4px solid #ffc107;
+        }
+        #selectorDisplay {
+            background: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        .test-elements {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-case {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .test-case h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>🔍 DOM选择器测试页面</h1>
+            <p>点击下面的元素来测试新的选择器生成算法</p>
+        </div>
+
+        <div class="debug-info">
+            <strong>🎯 当前选择器:</strong>
+            <div id="selectorDisplay">等待选择元素...</div>
+        </div>
+
+        <!-- 测试表单 -->
+        <div class="form-section">
+            <h3>表单测试区域</h3>
+            <div class="form-group">
+                <label>用户名:</label>
+                <input id="username" type="text" class="form-control" placeholder="请输入用户名" data-testid="username-input">
+            </div>
+            <div class="form-group">
+                <label>密码:</label>
+                <input type="password" class="form-control" placeholder="请输入密码" data-testid="password-input">
+            </div>
+            <div class="form-group">
+                <label>邮箱:</label>
+                <input type="email" class="form-control" placeholder="请输入邮箱" name="email">
+            </div>
+            <div class="form-group">
+                <button id="submit-btn" class="btn-primary" data-cy="submit-button">提交</button>
+                <button class="btn-success" data-testid="cancel-button">取消</button>
+            </div>
+        </div>
+
+        <!-- 复杂结构测试 -->
+        <div class="test-elements">
+            <div class="test-case">
+                <h4>React风格组件</h4>
+                <div class="App" id="react-app">
+                    <div class="Container css-abc123">
+                        <div class="Form css-def456">
+                            <div class="FormGroup css-ghi789">
+                                <input class="Input css-jkl012" type="text" placeholder="React输入框">
+                            </div>
+                            <div class="FormGroup css-mno345">
+                                <button class="Button css-pqr678">React按钮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-case">
+                <h4>Vue风格组件</h4>
+                <div id="vue-app">
+                    <div class="el-form">
+                        <div class="el-form-item">
+                            <div class="el-form-item__content">
+                                <input class="el-input__inner" type="text" placeholder="Vue输入框">
+                            </div>
+                        </div>
+                        <div class="el-form-item">
+                            <button class="el-button el-button--primary">Vue按钮</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-case">
+                <h4>Ant Design风格</h4>
+                <div class="ant-row">
+                    <div class="ant-col">
+                        <div class="ant-input-affix-wrapper">
+                            <input class="ant-input" type="text" placeholder="Ant Design输入框">
+                        </div>
+                        <button class="ant-btn ant-btn-primary">Ant Design按钮</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-case">
+                <h4>无ID/类元素</h4>
+                <section>
+                    <article>
+                        <div>
+                            <h5>标题1</h5>
+                            <p>段落1</p>
+                        </div>
+                        <div>
+                            <h5>标题2</h5>
+                            <p>段落2</p>
+                        </div>
+                    </article>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedElement = null;
+
+        // 监听来自内容脚本的选择器调试信息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'DOM_WATCHER_DEBUG') {
+                if (event.data.selector) {
+                    displaySelector(event.data.selector);
+                }
+            }
+        });
+
+        // 显示选择器
+        function displaySelector(selector) {
+            document.getElementById('selectorDisplay').textContent = selector;
+            selectedElement = selector;
+
+            // 测试选择器是否有效
+            try {
+                const element = document.querySelector(selector);
+                const isValid = !!element;
+                const selectorDiv = document.getElementById('selectorDisplay');
+
+                if (isValid) {
+                    selectorDiv.style.backgroundColor = '#d4edda';
+                    selectorDiv.style.borderColor = '#c3e6cb';
+                } else {
+                    selectorDiv.style.backgroundColor = '#f8d7da';
+                    selectorDiv.style.borderColor = '#f5c6cb';
+                }
+            } catch (error) {
+                console.warn('选择器测试失败:', selector, error);
+            }
+        }
+
+        // 高亮选中的元素
+        function highlightElement(element) {
+            // 移除之前的高亮
+            document.querySelectorAll('.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+                el.style.outline = '';
+            });
+
+            // 添加新的高亮
+            element.classList.add('highlighted');
+            element.style.outline = '3px solid #007bff';
+            element.style.outlineOffset = '2px';
+        }
+
+        // 添加点击事件监听
+        document.addEventListener('click', function(e) {
+            // 忽略debug区域点击
+            if (e.target.closest('.debug-info') || e.target.closest('.header')) {
+                return;
+            }
+
+            highlightElement(e.target);
+            console.log('点击了元素:', e.target);
+        });
+
+        // 页面加载完成提示
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('选择器测试页面已加载');
+            console.log('使用步骤:');
+            console.log('1. 点击浏览器扩展图标打开侧边栏');
+            console.log('2. 在侧边栏中点击"选择元素"');
+            console.log('3. 点击页面上的任何元素');
+            console.log('4. 查看生成的选择器');
+        });
+    </script>
+</body>
+</html>

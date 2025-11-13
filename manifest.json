@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "DOM属性监听器",
+  "version": "1.1.0",
+  "description": "监听网页元素属性变化并记录日志",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup-working.html",
+    "default_title": "DOM属性监听器"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js",
+        "sidebar-new.html",
+        "sidebar-new.js",
+        "sidebar.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidebar-new.html"
+  }
+}

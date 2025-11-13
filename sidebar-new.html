@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器 - 侧边栏</title>
+    <link rel="stylesheet" href="sidebar.css">
+</head>
+<body>
+    <div class="sidebar-container">
+        <!-- 侧边栏标题栏 -->
+        <div class="sidebar-header">
+            <div class="header-left">
+                <span class="logo">🔍</span>
+                <h3>DOM监听器</h3>
+            </div>
+            <div class="header-right">
+                <button id="refreshConnection" class="toggle-btn" title="重新连接">
+                    <span class="toggle-icon">🔄</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 侧边栏内容 -->
+        <div class="sidebar-content">
+            <!-- 连接状态 -->
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator status-inactive"></span>
+                <span class="status-text">未连接到页面</span>
+            </div>
+
+            <!-- 状态控制区域 -->
+            <div class="control-section">
+                <div class="status-row">
+                    <span class="status-indicator status-inactive" id="statusIndicator"></span>
+                    <span class="status-text" id="statusText">未开始监听</span>
+                </div>
+
+                <div class="control-buttons">
+                    <button id="startCapture" class="btn btn-primary" disabled>
+                        <span class="btn-icon">🎯</span>
+                        <span class="btn-text">选择元素</span>
+                    </button>
+                    <button id="toggleListening" class="btn btn-success toggle-btn" disabled>
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">开始监听</span>
+                    </button>
+                    <button id="clearLogs" class="btn btn-warning">
+                        <span class="btn-icon">🗑️</span>
+                        <span class="btn-text">清空日志</span>
+                    </button>
+                </div>
+
+                <!-- 元素信息显示 -->
+                <div id="elementInfo" class="element-info" style="display: none;">
+                    <div class="element-info-header">
+                        <span class="info-icon">📍</span>
+                        <span class="info-title">已选择元素</span>
+                    </div>
+                    <div id="elementInfoContent"></div>
+                </div>
+            </div>
+
+            <!-- 日志管理区域 -->
+            <div class="log-section">
+                <div class="log-header">
+                    <div class="log-title">
+                        <span class="log-icon">📋</span>
+                        <span>监听日志</span>
+                        <span class="log-count" id="logCount">(0)</span>
+                    </div>
+                    <div class="log-actions">
+                        <button id="exportLogs" class="btn btn-export" title="导出日志">
+                            <span class="btn-icon">📤</span>
+                        </button>
+                        <button id="clearLogs" class="btn btn-warning" title="清空日志">
+                            <span class="btn-icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 搜索框 -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchBox" class="search-input" placeholder="搜索元素、属性或时间...">
+                    </div>
+                </div>
+
+                <!-- 日志显示区域 -->
+                <div id="logContent" class="log-content">
+                    <div class="empty-state">
+                        <span class="empty-icon">📭</span>
+                        <span class="empty-text">暂无日志数据</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出选项对话框 -->
+    <div id="exportDialog" class="export-dialog" style="display: none;">
+        <div class="dialog-overlay"></div>
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>导出日志</h3>
+                <button id="closeExportDialog" class="dialog-close">×</button>
+            </div>
+            <div class="dialog-body">
+                <div class="export-options">
+                                        <div class="option-group">
+                        <label class="option-label">导出范围：</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="exportRange" value="all" checked>
+                                <span class="radio-text">全部日志</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="exportRange" value="filtered">
+                                <span class="radio-text">当前筛选结果</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button id="cancelExport" class="btn btn-secondary">取消</button>
+                <button id="confirmExport" class="btn btn-primary">导出</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="sidebar-new.js"></script>
+</body>
+</html>

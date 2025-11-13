@@ -1,0 +1,42 @@
+{
+  "name": "dom-attribute-watcher",
+  "version": "1.0.0",
+  "description": "Chrome和Edge浏览器扩展，用于监听网页元素属性变化",
+  "main": "content.js",
+  "scripts": {
+    "build": "echo '扩展已准备就绪，请在浏览器中加载'",
+    "dev": "echo '开发模式 - 请在浏览器中重新加载扩展'",
+    "test": "echo '在浏览器中打开 test-page.html 进行测试'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "edge-extension",
+    "dom-watcher",
+    "attribute-monitor",
+    "development-tool"
+  ],
+  "author": "DOM监听器开发团队",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {},
+  "browser": {
+    "chrome": ">=88.0",
+    "edge": ">=88.0"
+  },
+  "extension": {
+    "manifest_version": 3,
+    "permissions": [
+      "activeTab",
+      "storage"
+    ]
+  },
+  "files": [
+    "manifest.json",
+    "content.js",
+    "content.css",
+    "popup.html",
+    "popup.js",
+    "icons/",
+    "README.md"
+  ]
+}

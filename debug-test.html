@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM监听器调试测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .test-area {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .target-element {
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #2196F3;
+            border-radius: 4px;
+            background-color: #e3f2fd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .target-element:hover {
+            background-color: #bbdefb;
+            transform: scale(1.02);
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary { background-color: #2196F3; color: white; }
+        .btn-success { background-color: #4CAF50; color: white; }
+        .btn-warning { background-color: #FF9800; color: white; }
+
+        .debug-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .status.info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔍 DOM监听器调试测试页面</h1>
+
+    <div class="test-area">
+        <h2>🧪 调试信息</h2>
+        <div id="debugInfo" class="debug-info">
+            <div>检查扩展状态...</div>
+        </div>
+        <div id="status" class="status info">
+            等待测试...
+        </div>
+        <button onclick="checkExtension()" class="btn-primary">检查扩展状态</button>
+        <button onclick="testContentScript()" class="btn-success">测试内容脚本</button>
+        <button onclick="testManually()" class="btn-warning">手动测试</button>
+    </div>
+
+    <div class="test-area">
+        <h2>🎯 测试元素</h2>
+        <div id="testElement1" class="target-element" data-test="initial" data-counter="0">
+            <strong>测试元素 1</strong>
+            <br>data-test: <span id="testValue1">initial</span>
+            <br>data-counter: <span id="counterValue1">0</span>
+        </div>
+
+        <div>
+            <button onclick="changeTestElement()">改变属性</button>
+            <button onclick="incrementCounter()">增加计数器</button>
+            <button onclick="resetTestElement()">重置元素</button>
+        </div>
+    </div>
+
+    <div class="test-area">
+        <h2>📋 测试说明</h2>
+        <ol>
+            <li>首先点击"检查扩展状态"确认扩展已加载</li>
+            <li>点击"测试内容脚本"验证基本功能</li>
+            <li>打开扩展popup（点击浏览器工具栏中的扩展图标）</li>
+            <li>在popup中点击"🎯 选择元素"按钮</li>
+            <li>点击页面上的蓝色测试元素</li>
+            <li>选择要监听的属性（如data-test）</li>
+            <li>点击"▶️ 开始监听"</li>
+            <li>点击"改变属性"按钮测试监听功能</li>
+        </ol>
+    </div>
+
+    <script>
+        let counter = 0;
+
+        function updateDebugInfo(message, type = 'info') {
+            const debugInfo = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString();
+            debugInfo.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function checkExtension() {
+            updateDebugInfo('开始检查扩展状态...');
+            updateStatus('请通过扩展popup进行测试', 'info');
+
+            // 注意：在普通页面中Chrome扩展API不可用是正常的
+            updateDebugInfo('ℹ️ 在普通页面中Chrome扩展API不可用是正常的');
+            updateDebugInfo('ℹ️ 请通过浏览器扩展图标进行测试');
+            updateDebugInfo('ℹ️ 扩展API只在内容脚本和扩展后台页面中可用');
+
+            // 检查页面是否可以正常操作
+            if (document.getElementById('testElement1')) {
+                updateDebugInfo('✅ 测试元素存在');
+                updateStatus('页面元素正常，请使用扩展进行测试', 'success');
+            } else {
+                updateDebugInfo('❌ 测试元素不存在');
+                updateStatus('页面元素异常', 'error');
+            }
+        }
+
+        function testContentScript() {
+            updateDebugInfo('测试内容脚本功能...');
+
+            try {
+                // 发送测试消息到内容脚本
+                window.postMessage({
+                    type: 'DOM_WATCHER_MESSAGE',
+                    message: { action: 'test', data: 'Hello from debug page' }
+                }, '*');
+
+                updateDebugInfo('✅ 测试消息已发送');
+                updateStatus('测试消息已发送', 'success');
+            } catch (error) {
+                updateDebugInfo(`❌ 发送测试消息失败: ${error.message}`);
+                updateStatus('测试失败', 'error');
+            }
+        }
+
+        function testManually() {
+            updateDebugInfo('开始手动测试...');
+
+            // 模拟属性变化
+            const element = document.getElementById('testElement1');
+            element.setAttribute('data-manual-test', 'manual-value-' + Date.now());
+
+            updateDebugInfo('✅ 已设置data-manual-test属性');
+            updateStatus('手动测试完成', 'success');
+        }
+
+        function changeTestElement() {
+            const element = document.getElementById('testElement1');
+            const testValue = document.getElementById('testValue1');
+            const newValue = 'changed-' + Date.now();
+
+            element.setAttribute('data-test', newValue);
+            testValue.textContent = newValue;
+
+            updateDebugInfo(`✅ data-test属性已改为: ${newValue}`);
+        }
+
+        function incrementCounter() {
+            counter++;
+            const element = document.getElementById('testElement1');
+            const counterValue = document.getElementById('counterValue1');
+
+            element.setAttribute('data-counter', counter);
+            counterValue.textContent = counter;
+
+            updateDebugInfo(`✅ data-counter属性已改为: ${counter}`);
+        }
+
+        function resetTestElement() {
+            counter = 0;
+            const element = document.getElementById('testElement1');
+            const testValue = document.getElementById('testValue1');
+            const counterValue = document.getElementById('counterValue1');
+
+            element.setAttribute('data-test', 'initial');
+            element.setAttribute('data-counter', '0');
+            testValue.textContent = 'initial';
+            counterValue.textContent = '0';
+
+            updateDebugInfo('✅ 测试元素已重置');
+        }
+
+        // 监听来自扩展的消息
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'DOM_WATCHER_RESPONSE') {
+                updateDebugInfo(`📨 收到扩展响应: ${JSON.stringify(event.data.message)}`);
+            }
+        });
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            updateDebugInfo('调试测试页面已加载');
+            setTimeout(checkExtension, 1000);
+        };
+    </script>
+</body>
+</html>

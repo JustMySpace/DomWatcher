@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+
+        .target-element {
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #2196F3;
+            border-radius: 4px;
+            background-color: #e3f2fd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .target-element:hover {
+            background-color: #bbdefb;
+            transform: scale(1.02);
+        }
+
+        .target-element.changed {
+            background-color: #c8e6c9;
+            border-color: #4CAF50;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary { background-color: #2196F3; color: white; }
+        .btn-success { background-color: #4CAF50; color: white; }
+        .btn-warning { background-color: #FF9800; color: white; }
+        .btn-danger { background-color: #f44336; color: white; }
+
+        .status-display {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            background-color: #f0f0f0;
+            border-left: 4px solid #2196F3;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .highlight {
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { background-color: transparent; }
+            50% { background-color: #ffeb3b; }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 DOM属性监听器测试页面</h1>
+        <p>这个页面用于测试DOM属性监听器扩展的功能。请安装扩展后，尝试监听下面元素的属性变化。</p>
+
+        <!-- 测试区域1: 基本属性变化 -->
+        <div class="test-section">
+            <h3>📝 基本属性变化测试</h3>
+
+            <div id="testElement1" class="target-element" data-counter="0" data-status="ready">
+                <strong>测试元素 1</strong>
+                <br>data-counter: <span id="counterDisplay">0</span>
+                <br>data-status: <span id="statusDisplay">ready</span>
+                <br>class: "target-element"
+            </div>
+
+            <div>
+                <button class="btn-primary" onclick="incrementCounter()">增加计数器</button>
+                <button class="btn-success" onclick="changeStatus()">改变状态</button>
+                <button class="btn-warning" onclick="changeClass()">改变样式</button>
+                <button class="btn-danger" onclick="resetElement()">重置元素</button>
+            </div>
+        </div>
+
+        <!-- 测试区域2: 文本内容变化 -->
+        <div class="test-section">
+            <h3>📄 文本内容变化测试</h3>
+
+            <div id="testElement2" class="target-element" title="原始标题">
+                <strong>测试元素 2</strong>
+                <br>title: <span id="titleDisplay">原始标题</span>
+                <br>textContent: <span id="textDisplay">原始文本内容</span>
+            </div>
+
+            <div>
+                <input type="text" id="newTitle" placeholder="输入新标题" value="新的标题">
+                <input type="text" id="newText" placeholder="输入新文本" value="新的文本内容">
+                <button class="btn-primary" onclick="updateTextContent()">更新内容</button>
+            </div>
+        </div>
+
+        <!-- 测试区域3: 快速连续变化 -->
+        <div class="test-section">
+            <h3>⚡ 快速连续变化测试</h3>
+
+            <div id="testElement3" class="target-element" data-timestamp="0" data-value="0">
+                <strong>测试元素 3</strong>
+                <br>时间戳: <span id="timestampDisplay">0</span>
+                <br>数值: <span id="valueDisplay">0</span>
+            </div>
+
+            <div>
+                <button class="btn-primary" onclick="startRapidChange()">开始快速变化</button>
+                <button class="btn-danger" onclick="stopRapidChange()">停止变化</button>
+                <label>
+                    间隔(毫秒): <input type="number" id="interval" value="100" min="50" max="1000">
+                </label>
+            </div>
+        </div>
+
+        <!-- 测试区域4: 复杂属性变化 -->
+        <div class="test-section">
+            <h3>🎨 复杂属性变化测试</h3>
+
+            <div id="testElement4" class="target-element"
+                 style="background-color: #e3f2fd; color: #1976d2; font-size: 14px;"
+                 data-custom-color="#e3f2fd"
+                 data-custom-size="14">
+                <strong>测试元素 4</strong>
+                <br>背景色: <span id="bgColorDisplay">#e3f2fd</span>
+                <br>文字色: <span id="textColorDisplay">#1976d2</span>
+                <br>字体大小: <span id="fontSizeDisplay">14px</span>
+            </div>
+
+            <div>
+                <label>背景色:</label>
+                <input type="color" id="bgColor" value="#e3f2fd" onchange="changeStyle()">
+
+                <label>文字色:</label>
+                <input type="color" id="textColor" value="#1976d2" onchange="changeStyle()">
+
+                <label>字体大小:</label>
+                <select id="fontSize" onchange="changeStyle()">
+                    <option value="12">12px</option>
+                    <option value="14" selected>14px</option>
+                    <option value="16">16px</option>
+                    <option value="18">18px</option>
+                    <option value="20">20px</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 操作说明 -->
+        <div class="test-section">
+            <h3>📋 使用说明</h3>
+            <ol>
+                <li>安装DOM属性监听器扩展</li>
+                <li>点击扩展图标打开控制面板</li>
+                <li>点击"🎯 选择元素"按钮</li>
+                <li>在页面上点击想要监听的元素</li>
+                <li>在弹出的面板中选择要监听的属性</li>
+                <li>点击"▶️ 开始监听"</li>
+                <li>操作页面上的按钮来触发属性变化</li>
+                <li>在扩展面板中查看监听日志</li>
+            </ol>
+        </div>
+
+        <!-- 当前状态显示 -->
+        <div class="test-section">
+            <h3>📊 当前页面状态</h3>
+            <div class="status-display" id="statusDisplay">
+                等待扩展连接...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rapidChangeInterval = null;
+        let rapidChangeCounter = 0;
+
+        // 基本属性变化测试
+        function incrementCounter() {
+            const element = document.getElementById('testElement1');
+            const current = parseInt(element.getAttribute('data-counter')) || 0;
+            const newValue = current + 1;
+            element.setAttribute('data-counter', newValue);
+            document.getElementById('counterDisplay').textContent = newValue;
+            addHighlight(element);
+        }
+
+        function changeStatus() {
+            const element = document.getElementById('testElement1');
+            const statuses = ['ready', 'processing', 'completed', 'error'];
+            const current = element.getAttribute('data-status') || 'ready';
+            const currentIndex = statuses.indexOf(current);
+            const newStatus = statuses[(currentIndex + 1) % statuses.length];
+            element.setAttribute('data-status', newStatus);
+            document.getElementById('statusDisplay').textContent = newStatus;
+            addHighlight(element);
+        }
+
+        function changeClass() {
+            const element = document.getElementById('testElement1');
+            element.classList.toggle('changed');
+            addHighlight(element);
+        }
+
+        function resetElement() {
+            const element = document.getElementById('testElement1');
+            element.setAttribute('data-counter', '0');
+            element.setAttribute('data-status', 'ready');
+            element.className = 'target-element';
+            document.getElementById('counterDisplay').textContent = '0';
+            document.getElementById('statusDisplay').textContent = 'ready';
+            addHighlight(element);
+        }
+
+        // 文本内容变化测试
+        function updateTextContent() {
+            const element = document.getElementById('testElement2');
+            const newTitle = document.getElementById('newTitle').value;
+            const newText = document.getElementById('newText').value;
+
+            if (newTitle) {
+                element.setAttribute('title', newTitle);
+                document.getElementById('titleDisplay').textContent = newTitle;
+            }
+
+            if (newText) {
+                element.querySelector('#textDisplay').textContent = newText;
+            }
+
+            addHighlight(element);
+        }
+
+        // 快速连续变化测试
+        function startRapidChange() {
+            if (rapidChangeInterval) return;
+
+            const interval = parseInt(document.getElementById('interval').value) || 100;
+
+            rapidChangeInterval = setInterval(() => {
+                const element = document.getElementById('testElement3');
+                const timestamp = Date.now();
+                const value = ++rapidChangeCounter;
+
+                element.setAttribute('data-timestamp', timestamp);
+                element.setAttribute('data-value', value);
+
+                document.getElementById('timestampDisplay').textContent = timestamp;
+                document.getElementById('valueDisplay').textContent = value;
+
+                addHighlight(element);
+            }, interval);
+        }
+
+        function stopRapidChange() {
+            if (rapidChangeInterval) {
+                clearInterval(rapidChangeInterval);
+                rapidChangeInterval = null;
+            }
+        }
+
+        // 复杂属性变化测试
+        function changeStyle() {
+            const element = document.getElementById('testElement4');
+            const bgColor = document.getElementById('bgColor').value;
+            const textColor = document.getElementById('textColor').value;
+            const fontSize = document.getElementById('fontSize').value;
+
+            element.style.backgroundColor = bgColor;
+            element.style.color = textColor;
+            element.style.fontSize = fontSize + 'px';
+
+            element.setAttribute('data-custom-color', bgColor);
+            element.setAttribute('data-custom-size', fontSize);
+
+            document.getElementById('bgColorDisplay').textContent = bgColor;
+            document.getElementById('textColorDisplay').textContent = textColor;
+            document.getElementById('fontSizeDisplay').textContent = fontSize + 'px';
+
+            addHighlight(element);
+        }
+
+        // 辅助函数
+        function addHighlight(element) {
+            element.classList.add('highlight');
+            setTimeout(() => {
+                element.classList.remove('highlight');
+            }, 1000);
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('statusDisplay');
+            const elements = document.querySelectorAll('.target-element');
+            let status = '页面元素状态:\n\n';
+
+            elements.forEach((el, index) => {
+                status += `元素 ${index + 1} (${el.id}):\n`;
+
+                // 显示所有data-*属性
+                for (let attr of el.attributes) {
+                    if (attr.name.startsWith('data-')) {
+                        status += `  ${attr.name}: ${attr.value}\n`;
+                    }
+                }
+
+                // 显示其他重要属性
+                if (el.className) {
+                    status += `  class: ${el.className}\n`;
+                }
+                if (el.title) {
+                    status += `  title: ${el.title}\n`;
+                }
+                if (el.style.cssText) {
+                    status += `  style: ${el.style.cssText}\n`;
+                }
+
+                status += '\n';
+            });
+
+            statusElement.textContent = status;
+        }
+
+        // 定期更新状态显示
+        setInterval(updateStatus, 2000);
+
+        // 初始化
+        window.onload = function() {
+            updateStatus();
+            console.log('DOM属性监听器测试页面已加载');
+            console.log('请安装扩展并开始测试监听功能');
+        };
+    </script>
+</body>
+</html>
