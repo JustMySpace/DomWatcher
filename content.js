@@ -52,8 +52,8 @@ class DOMAttributeWatcher {
                 break;
 
             case 'startWatching':
-                await this.startWatching(request.elementSelector, request.attribute);
-                sendResponse({ success: true });
+                const result = await this.startWatching(request.elementSelector, request.attribute);
+                sendResponse(result);
                 break;
 
             case 'stopWatching':
@@ -638,6 +638,12 @@ class DOMAttributeWatcher {
         try {
             console.log('开始监听 - CSS选择器:', elementSelector, '属性:', attribute);
 
+            // 如果已经在监听，先停止当前监听
+            if (this.isWatching || this.observer) {
+                console.log('检测到已有监听器，先清理旧的监听器');
+                this.stopWatching();
+            }
+
             // 查找目标元素
             this.targetElement = this.findElementBySelector(elementSelector);
             if (!this.targetElement) {
@@ -652,52 +658,63 @@ class DOMAttributeWatcher {
             this.isWatching = true;
 
             // 获取初始值
-            let initialValue;
+            let lastValue;
             if (this.targetElement.hasAttribute(attribute)) {
-                initialValue = this.targetElement.getAttribute(attribute);
+                lastValue = this.targetElement.getAttribute(attribute);
             } else if (attribute === 'textContent') {
-                initialValue = this.targetElement.textContent || '';
+                lastValue = this.targetElement.textContent || '';
             } else if (attribute === 'innerText') {
-                initialValue = this.targetElement.innerText || '';
+                lastValue = this.targetElement.innerText || '';
             } else if (attribute === 'innerHTML') {
-                initialValue = this.targetElement.innerHTML || '';
+                lastValue = this.targetElement.innerHTML || '';
             } else {
-                initialValue = this.targetElement.getAttribute(attribute);
+                lastValue = this.targetElement.getAttribute(attribute);
             }
 
-            console.log('属性初始值:', initialValue);
-            this.addLog('开始监听', initialValue);
+            console.log('属性初始值:', lastValue);
+            this.addLog('开始监听', lastValue);
 
-            // 创建MutationObserver
+            // 创建MutationObserver - 使用异步处理避免阻塞页面
             this.observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'attributes' &&
-                        mutation.attributeName === attribute) {
-                        const newValue = this.targetElement.getAttribute(attribute);
-                        console.log('检测到属性变化:', attribute, '新值:', newValue);
-                        this.addLog('属性变化', newValue);
-                    } else if (mutation.type === 'characterData' ||
-                              (mutation.type === 'childList' && attribute.includes('text'))) {
-                        // 处理文本内容变化
-                        let newValue;
-                        if (attribute === 'textContent') {
-                            newValue = this.targetElement.textContent || '';
-                        } else if (attribute === 'innerText') {
-                            newValue = this.targetElement.innerText || '';
-                        } else if (attribute === 'innerHTML') {
-                            newValue = this.targetElement.innerHTML || '';
-                        } else {
-                            return; // 不是内容属性，跳过
-                        }
+                // 使用setTimeout异步处理，避免阻塞页面
+                setTimeout(() => {
+                    try {
+                        mutations.forEach((mutation) => {
+                            let newValue;
+                            let shouldLog = false;
 
-                        // 避免重复记录内容变化
-                        if (newValue !== initialValue) {
-                            console.log('检测到内容变化:', attribute, '新值:', newValue);
-                            this.addLog('内容变化', newValue);
-                            initialValue = newValue; // 更新初始值
-                        }
+                            if (mutation.type === 'attributes' &&
+                                mutation.attributeName === attribute) {
+                                newValue = this.targetElement.getAttribute(attribute);
+                                shouldLog = true;
+                            } else if (mutation.type === 'characterData' ||
+                                      (mutation.type === 'childList' && attribute.includes('text'))) {
+                                // 处理文本内容变化
+                                if (attribute === 'textContent') {
+                                    newValue = this.targetElement.textContent || '';
+                                } else if (attribute === 'innerText') {
+                                    newValue = this.targetElement.innerText || '';
+                                } else if (attribute === 'innerHTML') {
+                                    newValue = this.targetElement.innerHTML || '';
+                                } else {
+                                    return; // 不是内容属性，跳过
+                                }
+                                shouldLog = true;
+                            }
+
+                            // 避免重复记录相同的变化
+                            if (shouldLog && newValue !== lastValue) {
+                                console.log('检测到变化:', attribute, '新值:', newValue, '旧值:', lastValue);
+
+                                // 异步记录日志，避免频繁的消息发送
+                                this.addLogAsync('变化', newValue);
+                                lastValue = newValue;
+                            }
+                        });
+                    } catch (error) {
+                        console.error('MutationObserver回调处理失败:', error);
                     }
-                });
+                }, 0); // 下一个事件循环执行
             });
 
             // 确定观察配置
@@ -786,11 +803,14 @@ class DOMAttributeWatcher {
         }
 
         console.log('停止监听');
+
+        // 清理所有状态
         this.isWatching = false;
         this.targetElement = null;
         this.targetElementSelector = null;
         this.targetAttribute = null;
 
+        // 保存清理后的状态
         this.saveState();
 
         // 通知状态更新
@@ -833,6 +853,18 @@ class DOMAttributeWatcher {
             action: 'newLog',
             logEntry: logEntry
         });
+    }
+
+    // 异步版本的addLog，避免频繁的消息发送
+    addLogAsync(type, newValue) {
+        // 使用防抖机制，避免短时间内记录过多日志
+        if (this.logTimeout) {
+            clearTimeout(this.logTimeout);
+        }
+
+        this.logTimeout = setTimeout(() => {
+            this.addLog(type, newValue);
+        }, 50); // 50ms防抖延迟
     }
 
     clearLogs(isPageRefresh = false) {

@@ -40,9 +40,13 @@ class IndependentSidebarController {
     }
 
     bindEvents() {
-        // 控制按钮事件
+        // 控制按钮事件 - 根据状态决定行为
         document.getElementById('startCapture').addEventListener('click', () => {
-            this.startElementCapture();
+            if (this.isCapturing) {
+                this.stopElementCapture();
+            } else {
+                this.startElementCapture();
+            }
         });
 
         // Toggle按钮事件
@@ -102,11 +106,32 @@ class IndependentSidebarController {
             sendResponse({ received: true });
         });
 
+        // 监听标签页更新，检测页面刷新或导航
+        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+            if (changeInfo.status === 'complete' && tabId === this.currentTabId) {
+                console.log('检测到页面加载完成，重新建立连接');
+                // 延迟一下等待content script初始化
+                setTimeout(() => {
+                    this.refreshConnection();
+                }, 1000);
+            }
+        });
+
         console.log('通信初始化完成');
     }
 
     async sendMessage(action, data = {}) {
         try {
+            // 动态获取当前活动标签页ID，解决页面刷新后Tab ID失效的问题
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab || !tab.id) {
+                throw new Error('无法获取当前活动标签页');
+            }
+
+            // 更新当前标签页ID
+            this.currentTabId = tab.id;
+            console.log('使用动态Tab ID:', this.currentTabId, '执行操作:', action);
+
             const response = await chrome.tabs.sendMessage(this.currentTabId, {
                 action: action,
                 ...data
@@ -267,9 +292,8 @@ class IndependentSidebarController {
             if (btnText) btnText.textContent = '取消选择';
             if (btnIcon) btnIcon.textContent = '❌';
 
-            startCaptureBtn.onclick = () => {
-                this.stopElementCapture();
-            };
+            // 不再覆盖onclick，只更新UI状态
+            // 事件处理由原有的addEventListener统一处理
         } catch (error) {
             console.error('启动元素捕获失败:', error);
             alert('启动元素捕获失败: ' + error.message);
@@ -291,9 +315,8 @@ class IndependentSidebarController {
             if (btnText) btnText.textContent = '选择元素';
             if (btnIcon) btnIcon.textContent = '🎯';
 
-            startCaptureBtn.onclick = () => {
-                this.startElementCapture();
-            };
+            // 不再覆盖onclick，只更新UI状态
+            // 事件处理由原有的addEventListener统一处理
         } catch (error) {
             console.error('停止元素捕获失败:', error);
         }
@@ -320,12 +343,23 @@ class IndependentSidebarController {
 
             console.log('开始监听:', elementSelector, attribute);
 
-            await this.sendMessage('startWatching', {
+            // 发送开始监听命令并等待响应
+            const response = await this.sendMessage('startWatching', {
                 elementSelector,
                 attribute
             });
+
+            // 更新本地状态
+            if (response && response.success) {
+                this.isWatching = true;
+                this.updateStatus(`正在监听: ${this.elementInfo.tagName}.${attribute}`, true);
+                this.updateToggleButton(true);
+            } else {
+                throw new Error(response ? response.error : '未知错误');
+            }
         } catch (error) {
             console.error('启动监听失败:', error);
+            this.updateStatus('启动监听失败', false);
             alert('启动监听失败: ' + error.message);
         }
     }
@@ -333,7 +367,18 @@ class IndependentSidebarController {
     async stopListening() {
         try {
             console.log('停止监听');
-            await this.sendMessage('stopWatching');
+
+            // 发送停止监听命令并等待响应
+            const response = await this.sendMessage('stopWatching');
+
+            // 更新本地状态
+            if (response && response.success) {
+                this.isWatching = false;
+                this.updateStatus('监听已停止', false);
+                this.updateToggleButton(false);
+            } else {
+                throw new Error(response ? response.error : '未知错误');
+            }
         } catch (error) {
             console.error('停止监听失败:', error);
             alert('停止监听失败: ' + error.message);
@@ -353,10 +398,37 @@ class IndependentSidebarController {
     async loadInitialData() {
         try {
             console.log('加载初始数据');
-            this.updateConnectionStatus(true);
 
-            // 请求内容脚本发送当前状态和日志数据
-            const response = await this.sendMessage('getStatus');
+            // 添加重试机制，等待content script加载完成
+            let retryCount = 0;
+            const maxRetries = 5;
+            let response = null;
+
+            while (retryCount < maxRetries && !response) {
+                try {
+                    response = await this.sendMessage('getStatus');
+                    if (response) {
+                        console.log('成功获取状态数据');
+                        break;
+                    }
+                } catch (error) {
+                    console.log(`尝试 ${retryCount + 1}/${maxRetries} 失败:`, error.message);
+                    retryCount++;
+
+                    if (retryCount < maxRetries) {
+                        // 等待500ms后重试
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            }
+
+            if (!response) {
+                console.warn('无法连接到内容脚本，可能页面还未完全加载');
+                this.updateConnectionStatus(false);
+                return;
+            }
+
+            this.updateConnectionStatus(true);
 
             if (response) {
                 this.isWatching = response.isWatching;
