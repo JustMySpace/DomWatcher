@@ -7,6 +7,7 @@ class SimpleFloatingPanel {
         this.logs = [];
         this.isPanelVisible = false;
         this.watcherIdCounter = 1;
+        this.isPaused = false; // 暂停状态
         this.init();
     }
 
@@ -39,29 +40,51 @@ class SimpleFloatingPanel {
             <!-- 浮层面板 -->
             <div id="domWatcherPanel" style="display: none;">
                 <!-- 面板头部 -->
-                <div style="background: #667eea; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background: #667eea; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: bold;">DOM监听器 v2.0</span>
                     <button id="closePanelBtn" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px;">×</button>
                 </div>
 
-                <!-- 面板内容 -->
-                <div style="background: white; padding: 20px; max-height: 500px; overflow-y: auto;">
-                    <!-- 添加按钮 -->
-                    <button id="addWatcherBtn" style="background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px;">
-                        ➕ 添加监听器
-                    </button>
+                <!-- 面板内容 - 使用flex布局撑满高度 -->
+                <div style="display: flex; flex-direction: column; height: calc(100vh - 120px); max-height: calc(100vh - 120px);">
 
-                    <!-- 监听器列表 -->
-                    <div id="watcherList" style="margin-bottom: 20px;">
-                        <div style="text-align: center; color: #666; padding: 20px;">
-                            暂无监听器
+                    <!-- 监听器区域 -->
+                    <div style="display: flex; flex-direction: column; border-bottom: 1px solid #e0e0e0;">
+                        <!-- 监听器工具栏 -->
+                        <div style="background: #f8f9fa; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #e0e0e0;">
+                            <span style="font-weight: bold; color: #333; margin-right: 10px;">监听器</span>
+                            <button id="addWatcherBtn" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                ➕ 添加
+                            </button>
+                            <button id="clearWatchersBtn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                🗑️ 清空
+                            </button>
+                            <button id="pauseResumeBtn" style="background: #ffc107; color: #212529; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                ⏸️ 暂停
+                            </button>
+                        </div>
+                        <!-- 监听器列表 -->
+                        <div id="watcherList" style="flex: 1; overflow-y: auto; background: white; min-height: 150px;">
+                            <div style="text-align: center; color: #666; padding: 20px;">
+                                暂无监听器
+                            </div>
                         </div>
                     </div>
 
                     <!-- 日志区域 -->
-                    <div>
-                        <h4 style="margin: 0 0 10px 0;">监听日志</h4>
-                        <div id="logContent" style="border: 1px solid #ddd; padding: 10px; height: 200px; overflow-y: auto; background: #f9f9f9;">
+                    <div style="display: flex; flex-direction: column; flex: 1;">
+                        <!-- 日志工具栏 -->
+                        <div style="background: #f8f9fa; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #e0e0e0;">
+                            <span style="font-weight: bold; color: #333; margin-right: 10px;">监听日志</span>
+                            <button id="clearLogsBtn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                🗑️ 清空
+                            </button>
+                            <button id="exportLogsBtn" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                📥 导出
+                            </button>
+                        </div>
+                        <!-- 日志内容 -->
+                        <div id="logContent" style="flex: 1; overflow-y: auto; background: #f9f9f9; padding: 10px;">
                             <div style="text-align: center; color: #666;">暂无日志</div>
                         </div>
                     </div>
@@ -98,15 +121,18 @@ class SimpleFloatingPanel {
 
             #domWatcherPanel {
                 position: fixed;
-                top: 80px;
+                top: 20px;
                 right: 20px;
-                width: 400px;
+                bottom: 20px;
+                width: 450px;
                 max-width: 90vw;
                 background: white;
                 border-radius: 10px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
                 z-index: 2147483646;
                 font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
             }
 
             .watcher-item {
@@ -182,6 +208,38 @@ class SimpleFloatingPanel {
         if (addBtn) {
             addBtn.addEventListener('click', () => {
                 this.startElementSelection();
+            });
+        }
+
+        // 清空监听器按钮
+        const clearWatchersBtn = document.getElementById('clearWatchersBtn');
+        if (clearWatchersBtn) {
+            clearWatchersBtn.addEventListener('click', () => {
+                this.clearAllWatchers();
+            });
+        }
+
+        // 暂停/恢复按钮
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        if (pauseResumeBtn) {
+            pauseResumeBtn.addEventListener('click', () => {
+                this.togglePauseResume();
+            });
+        }
+
+        // 清空日志按钮
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+        if (clearLogsBtn) {
+            clearLogsBtn.addEventListener('click', () => {
+                this.clearLogs();
+            });
+        }
+
+        // 导出日志按钮
+        const exportLogsBtn = document.getElementById('exportLogsBtn');
+        if (exportLogsBtn) {
+            exportLogsBtn.addEventListener('click', () => {
+                this.exportLogs();
             });
         }
 
@@ -572,6 +630,129 @@ class SimpleFloatingPanel {
         `).join('');
 
         logContent.innerHTML = html;
+    }
+
+    // 清空所有监听器
+    async clearAllWatchers() {
+        if (this.watchers.size === 0) {
+            this.showNotification('没有监听器需要清空', 'info');
+            return;
+        }
+
+        try {
+            // 获取所有监听器ID
+            const watcherIds = Array.from(this.watchers.keys());
+
+            // 逐个删除监听器
+            for (const watcherId of watcherIds) {
+                await this.sendMessage('removeWatcher', { watcherId });
+            }
+
+            this.watchers.clear();
+            this.updateWatcherList();
+            this.showNotification(`已清空 ${watcherIds.length} 个监听器`, 'success');
+        } catch (error) {
+            console.error('清空监听器失败:', error);
+            this.showNotification('清空监听器失败: ' + error.message, 'error');
+        }
+    }
+
+    // 暂停/恢复监听
+    async togglePauseResume() {
+        this.isPaused = !this.isPaused;
+
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        if (!pauseResumeBtn) return;
+
+        if (this.isPaused) {
+            // 暂停所有监听器
+            for (const [watcherId, watcher] of this.watchers) {
+                if (watcher.observer) {
+                    await this.sendMessage('toggleWatcher', { watcherId });
+                }
+            }
+            pauseResumeBtn.innerHTML = '▶️ 恢复';
+            pauseResumeBtn.style.background = '#28a745';
+            pauseResumeBtn.style.color = 'white';
+            this.showNotification('所有监听器已暂停', 'info');
+        } else {
+            // 恢复所有监听器
+            for (const [watcherId, watcher] of this.watchers) {
+                if (!watcher.observer) {
+                    await this.sendMessage('toggleWatcher', { watcherId });
+                }
+            }
+            pauseResumeBtn.innerHTML = '⏸️ 暂停';
+            pauseResumeBtn.style.background = '#ffc107';
+            pauseResumeBtn.style.color = '#212529';
+            this.showNotification('所有监听器已恢复', 'success');
+        }
+    }
+
+    // 清空日志
+    async clearLogs() {
+        if (this.logs.length === 0) {
+            this.showNotification('没有日志需要清空', 'info');
+            return;
+        }
+
+        try {
+            await this.sendMessage('clearLogs');
+            this.logs = [];
+            this.updateLogDisplay();
+            this.showNotification(`已清空 ${this.logs.length} 条日志`, 'success');
+        } catch (error) {
+            console.error('清空日志失败:', error);
+            this.showNotification('清空日志失败: ' + error.message, 'error');
+        }
+    }
+
+    // 导出日志
+    exportLogs() {
+        if (this.logs.length === 0) {
+            this.showNotification('没有日志可以导出', 'info');
+            return;
+        }
+
+        try {
+            // 生成导出数据
+            const exportData = {
+                exportTime: new Date().toLocaleString('zh-CN'),
+                totalLogs: this.logs.length,
+                logs: this.logs.map(log => ({
+                    时间: log.timeString,
+                    监听器: log.watcherName || '未知',
+                    属性: log.attribute,
+                    新值: log.newValue,
+                    类型: log.type
+                }))
+            };
+
+            // 转换为JSON字符串
+            const jsonString = JSON.stringify(exportData, null, 2);
+
+            // 创建下载链接
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            // 创建下载链接
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `dom-watcher-logs-${Date.now()}.json`;
+
+            // 触发下载
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            // 清理URL
+            URL.revokeObjectURL(url);
+
+            this.showNotification(`已导出 ${this.logs.length} 条日志`, 'success');
+        } catch (error) {
+            console.error('导出日志失败:', error);
+            this.showNotification('导出日志失败: ' + error.message, 'error');
+        }
     }
 
     showNotification(message, type = 'info') {
