@@ -1,0 +1,708 @@
+/* DOM监听器浮层面板样式 */
+
+/* 触发按钮样式 */
+.dom-watcher-trigger {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    font-size: 20px;
+    color: white;
+}
+
+.dom-watcher-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+}
+
+.dom-watcher-trigger:active {
+    transform: translateY(0);
+}
+
+.dom-watcher-trigger.active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* 浮层面板容器 */
+.dom-watcher-panel {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 450px;
+    max-width: 90vw;
+    max-height: 80vh;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+    z-index: 2147483646;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.dom-watcher-panel.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* 面板头部 */
+.dom-watcher-panel-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.dom-watcher-panel-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dom-watcher-panel-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dom-watcher-panel-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dom-watcher-panel-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.dom-watcher-panel-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 面板内容 */
+.dom-watcher-panel-content {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 连接状态 */
+.dom-watcher-connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.dom-watcher-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc3545;
+}
+
+.dom-watcher-status-indicator.connected {
+    background: #28a745;
+}
+
+/* 监听列表区域 */
+.dom-watcher-list-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dom-watcher-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dom-watcher-list-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dom-watcher-list-count {
+    background: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+}
+
+.dom-watcher-add-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-width: auto;
+}
+
+/* 监听列表 */
+.dom-watcher-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.dom-watcher-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.dom-watcher-item:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.dom-watcher-item.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.dom-watcher-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.dom-watcher-item-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.dom-watcher-item-icon {
+    color: #2196f3;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.dom-watcher-item-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.dom-watcher-item-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc3545;
+    flex-shrink: 0;
+}
+
+.dom-watcher-item-status.watching {
+    background: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.dom-watcher-item-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.dom-watcher-item-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.2s;
+}
+
+.dom-watcher-item-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #495057;
+}
+
+.dom-watcher-item-btn.delete:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.dom-watcher-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.dom-watcher-item-selector {
+    color: #6c757d;
+    word-break: break-all;
+}
+
+.dom-watcher-item-attribute {
+    color: #007bff;
+    font-weight: 500;
+}
+
+.dom-watcher-empty-list {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.dom-watcher-empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.dom-watcher-empty-text {
+    margin-bottom: 16px;
+}
+
+/* 日志区域 */
+.dom-watcher-logs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+}
+
+.dom-watcher-logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dom-watcher-logs-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dom-watcher-log-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dom-watcher-log-filter-select {
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+    background: white;
+    color: #495057;
+}
+
+.dom-watcher-log-filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* 控制按钮 */
+.dom-watcher-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.dom-watcher-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+}
+
+.dom-watcher-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dom-watcher-btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.dom-watcher-btn-primary:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.dom-watcher-btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.dom-watcher-btn-success:hover:not(:disabled) {
+    background: #1e7e34;
+}
+
+.dom-watcher-btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.dom-watcher-btn-danger:hover:not(:disabled) {
+    background: #c82333;
+}
+
+.dom-watcher-btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.dom-watcher-btn-warning:hover:not(:disabled) {
+    background: #e0a800;
+}
+
+/* 元素信息 */
+.dom-watcher-element-info {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #e9ecef;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.dom-watcher-element-info-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.dom-watcher-element-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* 日志区域 */
+.dom-watcher-logs {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+}
+
+.dom-watcher-logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.dom-watcher-logs-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dom-watcher-log-count {
+    background: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+}
+
+.dom-watcher-logs-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.dom-watcher-btn-small {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: auto;
+}
+
+/* 搜索框 */
+.dom-watcher-search {
+    margin-bottom: 10px;
+}
+
+.dom-watcher-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.dom-watcher-search-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 日志内容 */
+.dom-watcher-log-content {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.dom-watcher-empty-state {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.dom-watcher-empty-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.dom-watcher-log-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.dom-watcher-log-item:last-child {
+    border-bottom: none;
+}
+
+.dom-watcher-log-item.highlight {
+    background: #fff3cd;
+}
+
+.dom-watcher-log-time {
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.dom-watcher-log-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dom-watcher-log-selector {
+    color: #495057;
+    word-break: break-all;
+}
+
+.dom-watcher-log-attr {
+    color: #007bff;
+    font-weight: 500;
+}
+
+.dom-watcher-log-value {
+    color: #28a745;
+    word-break: break-all;
+}
+
+/* 导出对话框 */
+.dom-watcher-export-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2147483648;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dom-watcher-dialog-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 300px;
+    max-width: 90vw;
+}
+
+.dom-watcher-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.dom-watcher-dialog-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dom-watcher-dialog-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.dom-watcher-dialog-body {
+    margin-bottom: 15px;
+}
+
+.dom-watcher-option-group {
+    margin-bottom: 15px;
+}
+
+.dom-watcher-option-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+.dom-watcher-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dom-watcher-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dom-watcher-dialog-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.dom-watcher-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.dom-watcher-btn-secondary:hover {
+    background: #545b62;
+}
+
+/* 响应式 */
+@media (max-width: 480px) {
+    .dom-watcher-panel {
+        width: calc(100vw - 40px);
+        right: 20px;
+        left: 20px;
+    }
+
+    .dom-watcher-trigger {
+        top: 15px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
+    }
+
+    .dom-watcher-controls {
+        flex-direction: column;
+    }
+
+    .dom-watcher-btn {
+        flex: none;
+    }
+}
+
+/* 滚动条样式 */
+.dom-watcher-log-content::-webkit-scrollbar,
+.dom-watcher-panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dom-watcher-log-content::-webkit-scrollbar-track,
+.dom-watcher-panel-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.dom-watcher-log-content::-webkit-scrollbar-thumb,
+.dom-watcher-panel-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.dom-watcher-log-content::-webkit-scrollbar-thumb:hover,
+.dom-watcher-panel-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

@@ -1,14 +1,11 @@
 // DOM属性监听器 - 内容脚本
 class DOMAttributeWatcher {
     constructor() {
-        this.isWatching = false;
-        this.targetElement = null;
-        this.targetElementSelector = null;
-        this.targetAttribute = null;
-        this.observer = null;
+        this.watchers = new Map(); // Map<watcherId, {element, selector, attribute, observer, name}>
         this.logs = [];
         this.isCapturing = false;
         this.highlightElement = null;
+        this.watcherIdCounter = 1;
         this.init();
     }
 
@@ -24,6 +21,11 @@ class DOMAttributeWatcher {
             if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE') {
                 this.handleDevToolsMessage(event.data.message);
             }
+
+            // 处理来自浮层面板的消息
+            if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE_TO_CONTENT') {
+                this.handleFloatingPanelMessage(event.data.data);
+            }
         });
 
         // 监听页面刷新，清空日志
@@ -33,6 +35,9 @@ class DOMAttributeWatcher {
 
         // 注入通信脚本
         this.injectCommunicationScript();
+
+        // 注入浮层面板脚本
+        this.injectFloatingPanelScript();
 
         // 从存储中恢复状态
         this.loadState();
@@ -72,6 +77,7 @@ class DOMAttributeWatcher {
 
             case 'getStatus':
                 sendResponse({
+                    connected: true,
                     isWatching: this.isWatching,
                     targetElement: this.targetElement ? this.getElementInfo(this.targetElement) : null,
                     targetAttribute: this.targetAttribute,
@@ -868,18 +874,26 @@ class DOMAttributeWatcher {
     }
 
     clearLogs(isPageRefresh = false) {
-        const wasWatching = this.isWatching;
         this.logs = [];
 
-        // 如果是页面刷新且正在监听，停止监听
-        if (isPageRefresh && wasWatching) {
-            this.stopWatching();
+        // 如果是页面刷新，清理所有监听器
+        if (isPageRefresh) {
+            console.log('页面刷新，清理所有监听器');
+            // 断开所有观察器
+            for (const [id, watcher] of this.watchers) {
+                if (watcher.observer) {
+                    watcher.observer.disconnect();
+                    watcher.observer = null;
+                }
+                watcher.element = null;
+            }
+            this.watchers.clear();
         }
 
         this.saveState();
 
         if (!isPageRefresh) {
-            // 主动清空时通知popup
+            // 主动清空时通知
             this.broadcastMessage({
                 action: 'logsCleared'
             });
@@ -887,11 +901,20 @@ class DOMAttributeWatcher {
     }
 
     saveState() {
+        // 将watchers转换为可序列化的格式
+        const watchersData = Array.from(this.watchers.entries()).map(([id, watcher]) => ({
+            id,
+            name: watcher.name,
+            selector: watcher.selector,
+            attribute: watcher.attribute,
+            isWatching: !!watcher.observer
+            // 注意：不保存element引用和observer，这些会在load时重新创建
+        }));
+
         const state = {
-            isWatching: this.isWatching,
-            targetElementSelector: this.targetElementSelector || (this.targetElement ? this.getCssSelector(this.targetElement) : null),
-            targetAttribute: this.targetAttribute,
-            logs: this.logs
+            watchers: watchersData,
+            logs: this.logs,
+            watcherIdCounter: this.watcherIdCounter
         };
 
         console.log('保存状态:', state);
@@ -906,37 +929,43 @@ class DOMAttributeWatcher {
             if (state) {
                 console.log('加载状态:', state);
                 this.logs = state.logs || [];
-                this.targetElementSelector = state.targetElementSelector;
-                this.targetAttribute = state.targetAttribute;
+                this.watcherIdCounter = state.watcherIdCounter || 1;
 
-                // 尝试根据选择器重新找到元素
-                if (state.targetElementSelector) {
-                    const element = document.querySelector(state.targetElementSelector);
-                    if (element) {
-                        this.targetElement = element;
-                        console.log('成功恢复目标元素:', element);
-                    } else {
-                        console.warn('无法根据选择器找到目标元素:', state.targetElementSelector);
-                        this.targetElement = null;
-                        this.targetElementSelector = null;
-                        this.targetAttribute = null;
+                // 恢复监听器列表（但不自动启动监听）
+                if (state.watchers && Array.isArray(state.watchers)) {
+                    for (const watcherData of state.watchers) {
+                        try {
+                            // 尝试重新找到元素
+                            const element = this.findElementBySelector(watcherData.selector);
+                            if (element) {
+                                const watcher = {
+                                    id: watcherData.id,
+                                    name: watcherData.name,
+                                    element: element,
+                                    selector: watcherData.selector,
+                                    attribute: watcherData.attribute,
+                                    observer: null, // 不自动恢复observer
+                                    lastValue: null
+                                };
+
+                                this.watchers.set(watcherData.id, watcher);
+                                console.log('恢复监听器:', watcherData.name);
+                            } else {
+                                console.warn('无法找到元素，跳过监听器:', watcherData.name, '选择器:', watcherData.selector);
+                            }
+                        } catch (error) {
+                            console.warn('恢复监听器失败:', watcherData.name, error);
+                        }
                     }
                 }
 
-                // 如果之前在监听，尝试恢复监听状态
-                if (state.isWatching && this.targetElement && this.targetAttribute) {
-                    console.log('尝试恢复监听状态');
-                    // 不自动恢复监听，等待用户确认
-                    try {
-                        await chrome.runtime.sendMessage({
-                            action: 'restoreWatchingState',
-                            targetElementSelector: state.targetElementSelector,
-                            targetAttribute: state.targetAttribute
-                        });
-                    } catch (error) {
-                        console.warn('发送恢复状态消息失败:', error);
-                    }
+                // 更新ID计数器
+                if (this.watchers.size > 0) {
+                    const maxId = Math.max(...Array.from(this.watchers.keys()));
+                    this.watcherIdCounter = Math.max(this.watcherIdCounter, maxId + 1);
                 }
+
+                console.log('状态恢复完成，监听器数量:', this.watchers.size);
             }
         } catch (error) {
             console.error('加载状态失败:', error);
@@ -965,13 +994,411 @@ class DOMAttributeWatcher {
         (document.head || document.documentElement).appendChild(script);
     }
 
-  // 简化的消息发送方法，只支持popup和独立侧边栏通信
+    // 注入浮层面板脚本到页面
+    injectFloatingPanelScript() {
+        console.log('=== 开始注入浮层面板脚本 ===');
+
+        // 先注入简化测试版本
+        if (!document.getElementById('testButton')) {
+            console.log('注入简化测试脚本');
+            const testScript = document.createElement('script');
+            testScript.src = chrome.runtime.getURL('test-simple.js');
+            testScript.onload = () => {
+                console.log('简化测试脚本加载完成');
+            };
+            testScript.onerror = () => {
+                console.error('简化测试脚本加载失败');
+            };
+            (document.head || document.documentElement).appendChild(testScript);
+        }
+
+        // 检查是否已经存在浮层UI
+        if (document.getElementById('domWatcherTrigger')) {
+            console.log('浮层UI已存在，跳过注入');
+            return;
+        }
+
+        // 检查是否已经注入过脚本
+        if (document.querySelector('script[src*="floating-panel.js"]')) {
+            console.log('浮层面板脚本已存在，等待UI创建');
+            return;
+        }
+
+        console.log('开始注入简化浮层面板脚本');
+        const script = document.createElement('script');
+        script.src = chrome.runtime.getURL('floating-panel-v2.js');
+        script.onload = () => {
+            console.log('浮层面板脚本加载完成');
+            // 等待一小段时间确保脚本执行完成
+            setTimeout(() => {
+                if (!document.getElementById('domWatcherTrigger')) {
+                    console.warn('浮层UI未找到，可能脚本执行失败');
+                } else {
+                    console.log('浮层UI创建成功');
+                }
+            }, 500);
+        };
+        script.onerror = (error) => {
+            console.error('浮层面板脚本加载失败:', error);
+            // 尝试重试一次
+            setTimeout(() => {
+                console.log('尝试重新注入浮层面板脚本');
+                this.injectFloatingPanelScript();
+            }, 1000);
+        };
+        (document.head || document.documentElement).appendChild(script);
+
+        console.log('=== 浮层面板脚本注入请求已发送 ===');
+    }
+
+  // 处理来自浮层面板的消息
+    async handleFloatingPanelMessage(message) {
+        try {
+            let response;
+            switch (message.action) {
+                case 'startCapture':
+                    response = { success: true };
+                    this.startElementCapture();
+                    break;
+
+                case 'stopCapture':
+                    response = { success: true };
+                    this.stopElementCapture();
+                    break;
+
+                case 'addWatcher':
+                    response = await this.addWatcher(message.elementSelector, message.attribute, message.name);
+                    break;
+
+                case 'removeWatcher':
+                    response = { success: true };
+                    this.removeWatcher(message.watcherId);
+                    break;
+
+                case 'toggleWatcher':
+                    response = await this.toggleWatcher(message.watcherId);
+                    break;
+
+                case 'getStatus':
+                    response = {
+                        connected: true,
+                        watchers: Array.from(this.watchers.entries()).map(([id, watcher]) => ({
+                            id,
+                            name: watcher.name,
+                            selector: watcher.selector,
+                            attribute: watcher.attribute,
+                            isWatching: !!watcher.observer,
+                            elementInfo: watcher.element ? this.getElementInfo(watcher.element) : null
+                        })),
+                        logs: this.logs,
+                        logsCount: this.logs.length
+                    };
+                    break;
+
+                case 'clearLogs':
+                    response = { success: true };
+                    this.clearLogs(false);
+                    break;
+
+                default:
+                    response = { error: 'Unknown action' };
+            }
+
+            // 发送响应回浮层面板
+            window.postMessage({
+                type: 'DOM_WATCHER_RESPONSE',
+                id: message.id,
+                data: response
+            }, '*');
+
+        } catch (error) {
+            // 发送错误响应
+            window.postMessage({
+                type: 'DOM_WATCHER_RESPONSE',
+                id: message.id,
+                error: error.message
+            }, '*');
+        }
+    }
+
+    // 添加新的监听器
+    async addWatcher(elementSelector, attribute, name) {
+        try {
+            console.log('添加监听器 - 选择器:', elementSelector, '属性:', attribute, '名称:', name);
+
+            // 检查是否已存在相同的监听器
+            for (const [id, watcher] of this.watchers) {
+                if (watcher.selector === elementSelector && watcher.attribute === attribute) {
+                    throw new Error('已存在相同的监听器');
+                }
+            }
+
+            // 查找目标元素
+            const element = this.findElementBySelector(elementSelector);
+            if (!element) {
+                throw new Error(`找不到目标元素 (选择器: ${elementSelector})`);
+            }
+
+            const watcherId = this.watcherIdCounter++;
+            const watcher = {
+                id: watcherId,
+                name: name || `监听器${watcherId}`,
+                element: element,
+                selector: elementSelector,
+                attribute: attribute,
+                observer: null,
+                lastValue: null
+            };
+
+            this.watchers.set(watcherId, watcher);
+
+            // 开始监听
+            await this.startWatchingForWatcher(watcher);
+
+            // 保存状态
+            this.saveState();
+
+            // 通知状态更新
+            this.broadcastMessage({
+                action: 'watcherAdded',
+                watcherId: watcherId,
+                watcher: {
+                    id: watcherId,
+                    name: watcher.name,
+                    selector: watcher.selector,
+                    attribute: watcher.attribute,
+                    isWatching: true
+                }
+            });
+
+            return { success: true, watcherId: watcherId };
+
+        } catch (error) {
+            console.error('添加监听器失败:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // 移除监听器
+    removeWatcher(watcherId) {
+        const watcher = this.watchers.get(watcherId);
+        if (!watcher) {
+            console.warn('监听器不存在:', watcherId);
+            return;
+        }
+
+        // 停止监听
+        if (watcher.observer) {
+            watcher.observer.disconnect();
+            watcher.observer = null;
+        }
+
+        // 清理引用
+        watcher.element = null;
+
+        // 从列表中移除
+        this.watchers.delete(watcherId);
+
+        console.log('监听器已移除:', watcherId);
+
+        // 保存状态
+        this.saveState();
+
+        // 通知状态更新
+        this.broadcastMessage({
+            action: 'watcherRemoved',
+            watcherId: watcherId
+        });
+    }
+
+    // 切换监听器状态
+    async toggleWatcher(watcherId) {
+        const watcher = this.watchers.get(watcherId);
+        if (!watcher) {
+            throw new Error('监听器不存在');
+        }
+
+        if (watcher.observer) {
+            // 停止监听
+            watcher.observer.disconnect();
+            watcher.observer = null;
+
+            this.broadcastMessage({
+                action: 'watcherStopped',
+                watcherId: watcherId
+            });
+        } else {
+            // 重新开始监听
+            await this.startWatchingForWatcher(watcher);
+
+            this.broadcastMessage({
+                action: 'watcherStarted',
+                watcherId: watcherId,
+                elementInfo: this.getElementInfo(watcher.element)
+            });
+        }
+
+        this.saveState();
+        return { success: true };
+    }
+
+    // 为特定监听器开始监听
+    async startWatchingForWatcher(watcher) {
+        if (watcher.observer) {
+            watcher.observer.disconnect();
+        }
+
+        // 检查元素是否仍然存在
+        if (!watcher.element || !document.contains(watcher.element)) {
+            // 尝试重新查找元素
+            const element = this.findElementBySelector(watcher.selector);
+            if (!element) {
+                throw new Error('目标元素已被移除且无法重新找到');
+            }
+            watcher.element = element;
+        }
+
+        // 获取初始值
+        let lastValue;
+        if (watcher.element.hasAttribute(watcher.attribute)) {
+            lastValue = watcher.element.getAttribute(watcher.attribute);
+        } else if (watcher.attribute === 'textContent') {
+            lastValue = watcher.element.textContent || '';
+        } else if (watcher.attribute === 'innerText') {
+            lastValue = watcher.element.innerText || '';
+        } else if (watcher.attribute === 'innerHTML') {
+            lastValue = watcher.element.innerHTML || '';
+        } else {
+            lastValue = watcher.element.getAttribute(watcher.attribute);
+        }
+
+        watcher.lastValue = lastValue;
+        console.log('监听器初始值:', lastValue);
+
+        // 记录开始监听日志
+        this.addLogForWatcher(watcher, '开始监听', lastValue);
+
+        // 创建MutationObserver
+        watcher.observer = new MutationObserver((mutations) => {
+            // 使用异步处理，避免阻塞页面
+            setTimeout(() => {
+                try {
+                    // 检查元素是否仍然存在
+                    if (!document.contains(watcher.element)) {
+                        console.log('元素已被移除，停止监听:', watcher.id);
+                        this.removeWatcher(watcher.id);
+                        return;
+                    }
+
+                    mutations.forEach((mutation) => {
+                        let newValue;
+                        let shouldLog = false;
+
+                        if (mutation.type === 'attributes' && mutation.attributeName === watcher.attribute) {
+                            newValue = watcher.element.getAttribute(watcher.attribute);
+                            shouldLog = true;
+                        } else if (mutation.type === 'characterData' || (mutation.type === 'childList' && watcher.attribute.includes('text'))) {
+                            if (watcher.attribute === 'textContent') {
+                                newValue = watcher.element.textContent || '';
+                            } else if (watcher.attribute === 'innerText') {
+                                newValue = watcher.element.innerText || '';
+                            } else if (watcher.attribute === 'innerHTML') {
+                                newValue = watcher.element.innerHTML || '';
+                            } else {
+                                return;
+                            }
+                            shouldLog = true;
+                        }
+
+                        // 避免重复记录相同的变化
+                        if (shouldLog && newValue !== watcher.lastValue) {
+                            console.log('监听器检测到变化:', watcher.id, watcher.attribute, '新值:', newValue, '旧值:', watcher.lastValue);
+
+                            this.addLogForWatcher(watcher, '变化', newValue);
+                            watcher.lastValue = newValue;
+                        }
+                    });
+                } catch (error) {
+                    console.error('监听器回调处理失败:', watcher.id, error);
+                }
+            }, 0);
+        });
+
+        // 确定观察配置
+        const observeConfig = {
+            attributes: true,
+            attributeFilter: [watcher.attribute],
+            attributeOldValue: true
+        };
+
+        if (watcher.attribute === 'textContent' || watcher.attribute === 'innerText' || watcher.attribute === 'innerHTML') {
+            observeConfig.childList = true;
+            observeConfig.characterData = true;
+            observeConfig.subtree = true;
+        }
+
+        // 开始观察
+        watcher.observer.observe(watcher.element, observeConfig);
+
+        console.log('监听器已启动:', watcher.id, '配置:', observeConfig);
+    }
+
+    // 为特定监听器添加日志
+    addLogForWatcher(watcher, type, newValue) {
+        const logEntry = {
+            id: Date.now() + Math.random(),
+            timestamp: Date.now(),
+            timeString: new Date().toLocaleString('zh-CN', {
+                hour12: false,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                fractionalSecondDigits: 3
+            }),
+            type,
+            watcherId: watcher.id,
+            watcherName: watcher.name,
+            elementInfo: this.getElementInfo(watcher.element),
+            attribute: watcher.attribute,
+            newValue
+        };
+
+        this.logs.unshift(logEntry);
+
+        // 限制日志数量
+        if (this.logs.length > 1000) {
+            this.logs = this.logs.slice(0, 1000);
+        }
+
+        this.saveState();
+
+        // 通知有新日志
+        this.broadcastMessage({
+            action: 'newLog',
+            logEntry: logEntry
+        });
+    }
+
+    // 简化的消息发送方法，支持popup、独立侧边栏和浮层面板通信
     broadcastMessage(message) {
         // 发送到popup和独立侧边栏
         try {
             chrome.runtime.sendMessage(message);
         } catch (error) {
             console.warn('发送消息失败:', error);
+        }
+
+        // 发送到浮层面板
+        try {
+            window.postMessage({
+                type: 'DOM_WATCHER_MESSAGE',
+                data: message
+            }, '*');
+        } catch (error) {
+            console.warn('发送消息到浮层面板失败:', error);
         }
     }
 }

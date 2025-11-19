@@ -11,16 +11,62 @@
 
     console.log('DOM监听器注入脚本初始化完成');
 
-    // 简单的消息转发器
-    window.domWatcher = {
-        postMessageToContent: function(message) {
-            // 将消息发送到内容脚本
+    // 消息处理器 - 处理来自浮层面板的消息
+    window.addEventListener('message', function(event) {
+        if (event.source !== window) return;
+
+        const message = event.data;
+        if (message && message.type === 'DOM_WATCHER_MESSAGE') {
+            // 将消息转发到内容脚本
             window.postMessage({
-                type: 'DOM_WATCHER_MESSAGE',
-                message: message
+                type: 'DOM_WATCHER_MESSAGE_TO_CONTENT',
+                data: message.data
             }, '*');
+        }
+    });
+
+    // 消息转发器 - 用于浮层面板调用
+    window.domWatcher = {
+        sendMessage: function(action, data = {}) {
+            return new Promise((resolve, reject) => {
+                const messageId = Date.now() + Math.random();
+
+                // 发送消息到内容脚本
+                window.postMessage({
+                    type: 'DOM_WATCHER_MESSAGE_TO_CONTENT',
+                    data: {
+                        id: messageId,
+                        action: action,
+                        ...data
+                    }
+                }, '*');
+
+                // 监听响应
+                const responseHandler = function(event) {
+                    if (event.source !== window) return;
+
+                    const response = event.data;
+                    if (response && response.type === 'DOM_WATCHER_RESPONSE' && response.id === messageId) {
+                        window.removeEventListener('message', responseHandler);
+
+                        if (response.error) {
+                            reject(new Error(response.error));
+                        } else {
+                            resolve(response.data);
+                        }
+                    }
+                };
+
+                window.addEventListener('message', responseHandler);
+
+                // 超时处理
+                setTimeout(() => {
+                    window.removeEventListener('message', responseHandler);
+                    reject(new Error('消息超时'));
+                }, 5000);
+            });
         }
     };
 
-    console.log('DOM监听器消息转发器已设置');
+    console.log('DOM监听器消息处理器已设置');
 })();

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM属性监听器 - 浮层面板</title>
+</head>
+<body>
+    <!-- 触发按钮 -->
+    <button id="domWatcherTrigger" class="dom-watcher-trigger" title="DOM监听器">
+        🔍
+    </button>
+
+    <!-- 浮层面板 -->
+    <div id="domWatcherPanel" class="dom-watcher-panel">
+        <!-- 面板头部 -->
+        <div id="domWatcherPanelHeader" class="dom-watcher-panel-header">
+            <div class="dom-watcher-panel-header-left">
+                <span class="dom-watcher-panel-title">DOM监听器</span>
+            </div>
+            <div class="dom-watcher-panel-header-right">
+                <button id="refreshConnection" class="dom-watcher-panel-btn" title="重新连接">
+                    🔄
+                </button>
+                <button id="collapsePanel" class="dom-watcher-panel-btn" title="收起/展开">
+                    ▼
+                </button>
+            </div>
+        </div>
+
+        <!-- 面板内容 -->
+        <div class="dom-watcher-panel-content">
+            <!-- 连接状态 -->
+            <div id="connectionStatus" class="dom-watcher-connection-status">
+                <span id="statusIndicator" class="dom-watcher-status-indicator"></span>
+                <span id="statusText">未连接到页面</span>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="dom-watcher-controls">
+                <button id="startCapture" class="dom-watcher-btn dom-watcher-btn-primary" disabled>
+                    <span>🎯</span>
+                    <span>选择元素</span>
+                </button>
+                <button id="toggleListening" class="dom-watcher-btn dom-watcher-btn-success" disabled>
+                    <span>▶️</span>
+                    <span>开始监听</span>
+                </button>
+                <button id="clearLogs" class="dom-watcher-btn dom-watcher-btn-warning">
+                    <span>🗑️</span>
+                    <span>清空日志</span>
+                </button>
+            </div>
+
+            <!-- 元素信息 -->
+            <div id="elementInfo" class="dom-watcher-element-info" style="display: none;">
+                <div class="dom-watcher-element-info-title">
+                    <span>📍</span>
+                    <span>已选择元素</span>
+                </div>
+                <div id="elementInfoContent"></div>
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="dom-watcher-logs">
+                <div class="dom-watcher-logs-header">
+                    <div class="dom-watcher-logs-title">
+                        <span>📋</span>
+                        <span>监听日志</span>
+                        <span id="logCount" class="dom-watcher-log-count">(0)</span>
+                    </div>
+                    <div class="dom-watcher-logs-actions">
+                        <button id="exportLogs" class="dom-watcher-btn dom-watcher-btn-primary dom-watcher-btn-small" title="导出日志">
+                            <span>📤</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 搜索框 -->
+                <div class="dom-watcher-search">
+                    <input type="text" id="searchBox" class="dom-watcher-search-input" placeholder="搜索元素、属性或时间...">
+                </div>
+
+                <!-- 日志内容 -->
+                <div id="logContent" class="dom-watcher-log-content">
+                    <div class="dom-watcher-empty-state">
+                        <span class="dom-watcher-empty-icon">📭</span>
+                        <span>暂无日志数据</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出选项对话框 -->
+    <div id="exportDialog" class="dom-watcher-export-dialog" style="display: none;">
+        <div class="dom-watcher-dialog-content">
+            <div class="dom-watcher-dialog-header">
+                <h3 class="dom-watcher-dialog-title">导出日志</h3>
+                <button id="closeExportDialog" class="dom-watcher-dialog-close">×</button>
+            </div>
+            <div class="dom-watcher-dialog-body">
+                <div class="dom-watcher-option-group">
+                    <label class="dom-watcher-option-label">导出范围：</label>
+                    <div class="dom-watcher-radio-group">
+                        <label class="dom-watcher-radio-label">
+                            <input type="radio" name="exportRange" value="all" checked>
+                            <span>全部日志</span>
+                        </label>
+                        <label class="dom-watcher-radio-label">
+                            <input type="radio" name="exportRange" value="filtered">
+                            <span>当前筛选结果</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="dom-watcher-dialog-footer">
+                <button id="cancelExport" class="dom-watcher-btn dom-watcher-btn-secondary">取消</button>
+                <button id="confirmExport" class="dom-watcher-btn dom-watcher-btn-primary">导出</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
