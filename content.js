@@ -910,45 +910,41 @@ class DOMAttributeWatcher {
 
             this.addLog('开始监听', lastValue);
 
-            // 创建MutationObserver - 使用异步处理避免阻塞页面
+            // 创建MutationObserver - 立即处理以确保时间准确
             this.observer = new MutationObserver((mutations) => {
-                // 使用setTimeout异步处理，避免阻塞页面
-                setTimeout(() => {
-                    try {
-                        mutations.forEach((mutation) => {
-                            let newValue;
-                            let shouldLog = false;
+                try {
+                    mutations.forEach((mutation) => {
+                        let newValue;
+                        let shouldLog = false;
 
-                            if (mutation.type === 'attributes' &&
-                                mutation.attributeName === attribute) {
-                                newValue = this.targetElement.getAttribute(attribute);
-                                shouldLog = true;
-                            } else if (mutation.type === 'characterData' ||
-                                      (mutation.type === 'childList' && attribute.includes('text'))) {
-                                // 处理文本内容变化
-                                if (attribute === 'textContent') {
-                                    newValue = this.targetElement.textContent || '';
-                                } else if (attribute === 'innerText') {
-                                    newValue = this.targetElement.innerText || '';
-                                } else if (attribute === 'innerHTML') {
-                                    newValue = this.targetElement.innerHTML || '';
-                                } else {
-                                    return; // 不是内容属性，跳过
-                                }
-                                shouldLog = true;
+                        if (mutation.type === 'attributes' &&
+                            mutation.attributeName === attribute) {
+                            newValue = this.targetElement.getAttribute(attribute);
+                            shouldLog = true;
+                        } else if (mutation.type === 'characterData' ||
+                                  (mutation.type === 'childList' && attribute.includes('text'))) {
+                            // 处理文本内容变化
+                            if (attribute === 'textContent') {
+                                newValue = this.targetElement.textContent || '';
+                            } else if (attribute === 'innerText') {
+                                newValue = this.targetElement.innerText || '';
+                            } else if (attribute === 'innerHTML') {
+                                newValue = this.targetElement.innerHTML || '';
+                            } else {
+                                return; // 不是内容属性，跳过
                             }
+                            shouldLog = true;
+                        }
 
-                            // 避免重复记录相同的变化
-                            if (shouldLog && newValue !== lastValue) {
-
-                                // 异步记录日志，避免频繁的消息发送
-                                this.addLogAsync('变化', newValue);
-                                lastValue = newValue;
-                            }
-                        });
-                    } catch (error) {
-                    }
-                }, 0); // 下一个事件循环执行
+                        // 避免重复记录相同的变化
+                        if (shouldLog && newValue !== lastValue) {
+                            // 立即记录日志，确保时间准确
+                            this.addLogAsync('变化', newValue);
+                            lastValue = newValue;
+                        }
+                    });
+                } catch (error) {
+                }
             });
 
             // 确定观察配置
@@ -1346,16 +1342,10 @@ class DOMAttributeWatcher {
         });
     }
 
-    // 异步版本的addLog，避免频繁的消息发送
+    // 立即版本的addLog，记录准确时间
     addLogAsync(type, newValue) {
-        // 使用防抖机制，避免短时间内记录过多日志
-        if (this.logTimeout) {
-            clearTimeout(this.logTimeout);
-        }
-
-        this.logTimeout = setTimeout(() => {
-            this.addLog(type, newValue);
-        }, 50); // 50ms防抖延迟
+        // 立即记录日志，确保时间准确
+        this.addLog(type, newValue);
     }
 
     clearLogs(isPageRefresh = false) {
