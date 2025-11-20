@@ -1,5 +1,4 @@
 // DOM监听器浮层面板 - 简化版本 v2.0
-console.log('=== DOM监听器浮层面板 v2.0 开始加载 ===');
 
 class SimpleFloatingPanel {
     constructor() {
@@ -12,21 +11,16 @@ class SimpleFloatingPanel {
     }
 
     init() {
-        console.log('初始化简化浮层面板');
         this.createUI();
         this.bindEvents();
         this.loadInitialData();
-        console.log('简化浮层面板初始化完成');
     }
 
     createUI() {
         // 检查是否已存在
         if (document.getElementById('domWatcherTrigger')) {
-            console.log('浮层UI已存在');
             return;
         }
-
-        console.log('创建浮层UI');
 
         // 创建容器
         const container = document.createElement('div');
@@ -48,44 +42,47 @@ class SimpleFloatingPanel {
                 <!-- 面板内容 - 使用flex布局撑满高度 -->
                 <div style="display: flex; flex-direction: column; height: calc(100vh - 120px); max-height: calc(100vh - 120px);">
 
-                    <!-- 监听器区域 -->
-                    <div style="display: flex; flex-direction: column; border-bottom: 1px solid #e0e0e0;">
-                        <!-- 监听器工具栏 -->
-                        <div style="background: #f8f9fa; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #e0e0e0;">
-                            <span style="font-weight: bold; color: #333; margin-right: 10px;">监听器</span>
-                            <button id="addWatcherBtn" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                ➕ 添加
-                            </button>
-                            <button id="clearWatchersBtn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                🗑️ 清空
-                            </button>
-                            <button id="pauseResumeBtn" style="background: #ffc107; color: #212529; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                ⏸️ 暂停
-                            </button>
-                        </div>
-                        <!-- 监听器列表 -->
-                        <div id="watcherList" style="flex: 1; overflow-y: auto; background: white; min-height: 150px;">
-                            <div style="text-align: center; color: #666; padding: 20px;">
-                                暂无监听器
+                    <!-- 主要内容区域 - 监听器占1/3，日志占2/3 -->
+                    <div style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+
+                        <!-- 监听器区域 - 占1/3高度 -->
+                        <div style="display: flex; flex-direction: column; flex: 1; border-bottom: 1px solid #e0e0e0; min-height: 0;">
+                            <!-- 监听器工具栏 -->
+                            <div style="background: #f8f9fa; padding: 8px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #e0e0e0; flex-shrink: 0;">
+                                <span style="font-weight: bold; color: #333; margin-right: 8px; font-size: 13px;">🎯 监听器</span>
+                                <span id="watcherCount" style="background: #6c757d; color: white; padding: 3px 7px; border-radius: 10px; font-size: 11px; margin-right: 8px;">(0)</span>
+                                <button id="addWatcherBtn" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    ➕ 添加
+                                </button>
+                                <button id="clearWatchersBtn" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    🗑️ 清空
+                                </button>
+                            </div>
+                            <!-- 监听器列表 -->
+                            <div id="watcherList" style="flex: 1; overflow-y: auto; background: white; min-height: 0;">
+                                <div style="text-align: center; color: #666; padding: 15px; font-size: 12px;">
+                                    🎯 暂无监听器
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- 日志区域 -->
-                    <div style="display: flex; flex-direction: column; flex: 1;">
-                        <!-- 日志工具栏 -->
-                        <div style="background: #f8f9fa; padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #e0e0e0;">
-                            <span style="font-weight: bold; color: #333; margin-right: 10px;">监听日志</span>
-                            <button id="clearLogsBtn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                🗑️ 清空
-                            </button>
-                            <button id="exportLogsBtn" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                📥 导出
-                            </button>
-                        </div>
-                        <!-- 日志内容 -->
-                        <div id="logContent" style="flex: 1; overflow-y: auto; background: #f9f9f9; padding: 10px;">
-                            <div style="text-align: center; color: #666;">暂无日志</div>
+                        <!-- 日志区域 - 占2/3高度 -->
+                        <div style="display: flex; flex-direction: column; flex: 2; min-height: 0;">
+                            <!-- 日志工具栏 -->
+                            <div style="background: #f8f9fa; padding: 8px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #e0e0e0; flex-shrink: 0;">
+                                <span style="font-weight: bold; color: #333; margin-right: 8px; font-size: 13px;">📋 监听日志</span>
+                                <span id="logCount" style="background: #6c757d; color: white; padding: 3px 7px; border-radius: 10px; font-size: 11px; margin-right: 8px;">(0)</span>
+                                <button id="clearLogsBtn" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    🗑️ 清空
+                                </button>
+                                <button id="exportLogsBtn" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    📥 导出
+                                </button>
+                            </div>
+                            <!-- 日志内容 -->
+                            <div id="logContent" style="flex: 1; overflow-y: auto; background: #f9f9f9; padding: 8px; min-height: 0;">
+                                <div style="text-align: center; color: #666; font-size: 12px;">📋 暂无日志</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,16 +173,34 @@ class SimpleFloatingPanel {
                 color: #666;
                 margin-bottom: 2px;
             }
+
+            /* 滚动条样式 */
+            #watcherList::-webkit-scrollbar,
+            #logContent::-webkit-scrollbar {
+                width: 6px;
+            }
+            #watcherList::-webkit-scrollbar-track,
+            #logContent::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 3px;
+            }
+            #watcherList::-webkit-scrollbar-thumb,
+            #logContent::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 3px;
+            }
+            #watcherList::-webkit-scrollbar-thumb:hover,
+            #logContent::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
         `;
         document.head.appendChild(style);
 
         // 添加到页面
         document.body.appendChild(container);
-        console.log('浮层UI创建完成');
     }
 
     bindEvents() {
-        console.log('绑定事件');
 
         // 触发按钮
         const triggerBtn = document.getElementById('domWatcherTrigger');
@@ -242,8 +257,6 @@ class SimpleFloatingPanel {
                 this.exportLogs();
             });
         }
-
-        console.log('事件绑定完成');
     }
 
     togglePanel() {
@@ -378,7 +391,6 @@ class SimpleFloatingPanel {
             elementInfo.attributes[attr.name] = attr.value;
         }
 
-        console.log('选择元素:', elementInfo);
         this.showAddDialog(elementInfo);
     }
 
@@ -541,7 +553,6 @@ class SimpleFloatingPanel {
 
     async addWatcher(selector, attribute, name) {
         try {
-            console.log('添加监听器:', { selector, attribute, name });
 
             const response = await this.sendMessage('addWatcher', {
                 elementSelector: selector,
@@ -563,30 +574,46 @@ class SimpleFloatingPanel {
                 throw new Error(response ? response.error : '未知错误');
             }
         } catch (error) {
-            console.error('添加监听器失败:', error);
             this.showNotification('添加监听器失败: ' + error.message, 'error');
         }
     }
 
     updateWatcherList() {
         const listContainer = document.getElementById('watcherList');
+        const watcherCount = document.getElementById('watcherCount');
+
         if (!listContainer) return;
 
+        // 更新计数器
+        if (watcherCount) {
+            watcherCount.textContent = `(${this.watchers.size})`;
+        }
+
         if (this.watchers.size === 0) {
-            listContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">暂无监听器</div>';
+            listContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 15px; font-size: 12px;">🎯 暂无监听器</div>';
             return;
         }
 
-        const html = Array.from(this.watchers.values()).map(watcher => `
-            <div class="watcher-item ${watcher.isWatching ? 'active' : ''}">
-                <div class="watcher-name">${watcher.name}</div>
-                <div class="watcher-info">选择器: ${watcher.selector}</div>
-                <div class="watcher-info">属性: ${watcher.attribute}</div>
-                <div class="watcher-actions">
-                    <button onclick="window.simplePanel.removeWatcher(${watcher.id})" style="background: #dc3545; color: white;">删除</button>
+        // 使用存储的序号
+        const html = Array.from(this.watchers.values()).map(watcher => {
+            const number = watcher.serialNumber || '?';
+            return `
+                <div class="watcher-item ${watcher.isWatching ? 'active' : ''}" style="position: relative;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <span style="background: #007bff; color: white; padding: 2px 6px; border-radius: 8px; font-size: 9px; font-weight: 600; min-width: 18px; text-align: center;">${number}#</span>
+                        <div style="flex: 1; font-weight: 600; color: #333; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${watcher.name}</div>
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: ${watcher.isWatching ? '#28a745' : '#dc3545'}; box-shadow: ${watcher.isWatching ? '0 0 0 2px rgba(40, 167, 69, 0.3)' : 'none'};"></div>
+                    </div>
+                    <div style="display: flex; gap: 8px; font-size: 10px; color: #666;">
+                        <div style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${watcher.selector}">选择器: ${watcher.selector}</div>
+                        <div style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">属性: ${watcher.attribute}</div>
+                    </div>
+                    <div style="margin-top: 6px; text-align: right;">
+                        <button onclick="window.simplePanel.removeWatcher(${watcher.id})" style="background: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px;">🗑️ 删除</button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         listContainer.innerHTML = html;
     }
@@ -600,7 +627,6 @@ class SimpleFloatingPanel {
                 this.updateWatcherList();
             }
         } catch (error) {
-            console.error('删除监听器失败:', error);
             this.showNotification('删除监听器失败: ' + error.message, 'error');
         }
     }
@@ -615,19 +641,36 @@ class SimpleFloatingPanel {
 
     updateLogDisplay() {
         const logContent = document.getElementById('logContent');
+        const logCount = document.getElementById('logCount');
+
         if (!logContent) return;
 
+        // 更新计数器
+        if (logCount) {
+            logCount.textContent = `(${this.logs.length})`;
+        }
+
         if (this.logs.length === 0) {
-            logContent.innerHTML = '<div style="text-align: center; color: #666;">暂无日志</div>';
+            logContent.innerHTML = '<div style="text-align: center; color: #666; font-size: 12px;">📋 暂无日志</div>';
             return;
         }
 
-        const html = this.logs.slice(0, 50).map(log => `
-            <div class="log-item">
-                <div class="log-time">${log.timeString}</div>
-                <div><strong>${log.watcherName || '未知'}</strong> - ${log.attribute}: "${log.newValue}"</div>
-            </div>
-        `).join('');
+        const html = this.logs.slice(0, 100).map(log => {
+            // 使用日志中的序号
+            const watcherNumber = log.watcherSerialNumber || '?';
+
+            return `
+                <div class="log-item" style="margin-bottom: 8px; padding: 8px; background: white; border-left: 3px solid #007bff; border-radius: 4px; font-size: 11px; line-height: 1.4;">
+                    <div style="color: #6c757d; font-size: 10px; margin-bottom: 4px;">⏰ ${log.timeString}</div>
+                    <div style="color: #333;">
+                        <span style="background: #007bff; color: white; padding: 1px 4px; border-radius: 4px; font-size: 9px; font-weight: 600;">${watcherNumber}#</span>
+                        <strong style="margin-left: 6px;">${log.watcherName || '未知'}</strong>
+                        <span style="color: #007bff; margin-left: 6px;">${log.attribute}:</span>
+                        <span style="color: #28a745; word-break: break-all;">"${log.newValue}"</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
 
         logContent.innerHTML = html;
     }
@@ -652,7 +695,6 @@ class SimpleFloatingPanel {
             this.updateWatcherList();
             this.showNotification(`已清空 ${watcherIds.length} 个监听器`, 'success');
         } catch (error) {
-            console.error('清空监听器失败:', error);
             this.showNotification('清空监听器失败: ' + error.message, 'error');
         }
     }
@@ -702,7 +744,6 @@ class SimpleFloatingPanel {
             this.updateLogDisplay();
             this.showNotification(`已清空 ${this.logs.length} 条日志`, 'success');
         } catch (error) {
-            console.error('清空日志失败:', error);
             this.showNotification('清空日志失败: ' + error.message, 'error');
         }
     }
@@ -721,6 +762,7 @@ class SimpleFloatingPanel {
                 totalLogs: this.logs.length,
                 logs: this.logs.map(log => ({
                     时间: log.timeString,
+                    序号: `${log.watcherSerialNumber}#`,
                     监听器: log.watcherName || '未知',
                     属性: log.attribute,
                     新值: log.newValue,
@@ -750,7 +792,6 @@ class SimpleFloatingPanel {
 
             this.showNotification(`已导出 ${this.logs.length} 条日志`, 'success');
         } catch (error) {
-            console.error('导出日志失败:', error);
             this.showNotification('导出日志失败: ' + error.message, 'error');
         }
     }
@@ -852,13 +893,16 @@ class SimpleFloatingPanel {
     }
 
     handleMessage(message) {
-        console.log('收到消息:', message);
 
         switch (message.action) {
             case 'newLog':
                 this.addLog(message.logEntry);
                 break;
             case 'watcherAdded':
+                // 更新前端监听器数据，确保包含序号
+                if (message.watcher && message.watcher.id) {
+                    this.watchers.set(message.watcher.id, message.watcher);
+                }
                 this.updateWatcherList();
                 break;
             case 'watcherRemoved':
@@ -881,18 +925,15 @@ class SimpleFloatingPanel {
                 this.updateLogDisplay();
             }
         } catch (error) {
-            console.warn('加载初始数据失败:', error);
         }
     }
 }
 
 // 初始化
 function initSimplePanel() {
-    console.log('初始化简化面板');
 
     // 避免重复初始化
     if (window.simplePanel) {
-        console.log('面板已存在');
         return;
     }
 
@@ -919,4 +960,3 @@ if (document.readyState === 'loading') {
 // 额外保险
 setTimeout(initSimplePanel, 1000);
 
-console.log('=== DOM监听器浮层面板 v2.0 加载完成 ===');

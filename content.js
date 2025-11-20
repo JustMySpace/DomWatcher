@@ -18,12 +18,12 @@ class DOMAttributeWatcher {
 
         // 监听来自注入脚本的消息
         window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE') {
-                this.handleDevToolsMessage(event.data.message);
+            if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE' && event.data.message) {
+                this.handleMessage(event.data.message);
             }
 
             // 处理来自浮层面板的消息
-            if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE_TO_CONTENT') {
+            if (event.data && event.data.type === 'DOM_WATCHER_MESSAGE_TO_CONTENT' && event.data.data) {
                 this.handleFloatingPanelMessage(event.data.data);
             }
         });
@@ -44,9 +44,13 @@ class DOMAttributeWatcher {
     }
 
     async handleMessage(request, sendResponse) {
+        // 检查request是否有效
+        if (!request || typeof request !== 'object') {
+            return;
+        }
+
         switch (request.action) {
             case 'startCapture':
-                console.log('收到startCapture消息');
                 this.startElementCapture();
                 sendResponse({ success: true });
                 break;
@@ -236,8 +240,6 @@ class DOMAttributeWatcher {
         const elementInfo = this.getElementInfo(element);
         const cssSelector = this.getCssSelector(element);
 
-        console.log('元素已选择:', elementInfo);
-        console.log('生成的CSS选择器:', cssSelector);
 
         // 发送调试信息到页面（用于调试页面显示）
         try {
@@ -247,7 +249,6 @@ class DOMAttributeWatcher {
                 element: element.tagName.toLowerCase()
             }, '*');
         } catch (error) {
-            console.warn('发送调试信息失败:', error);
         }
 
         // 通知popup元素已被选择
@@ -326,12 +327,10 @@ class DOMAttributeWatcher {
     }
 
     getCssSelector(element) {
-        console.log('生成CSS选择器 for:', element);
 
         // 优先使用开发者工具格式的选择器
         const devToolsSelector = this.getDevToolsSelector(element);
         if (devToolsSelector && this.validateSelector(devToolsSelector, element)) {
-            console.log('使用开发者工具格式选择器:', devToolsSelector);
             return devToolsSelector;
         }
 
@@ -347,14 +346,12 @@ class DOMAttributeWatcher {
         // 返回第一个有效的选择器
         for (const selector of strategies) {
             if (selector && this.validateSelector(selector, element)) {
-                console.log('使用备选选择器策略:', selector);
                 return selector;
             }
         }
 
         // 如果所有策略都失败，使用完整路径作为最后手段
         const fullpathSelector = this.getFullpathSelector(element);
-        console.log('使用完整路径选择器:', fullpathSelector);
         return fullpathSelector;
     }
 
@@ -382,10 +379,8 @@ class DOMAttributeWatcher {
             const limitedPath = path.slice(-5); // 最多5层
             const selector = limitedPath.join(' > ');
 
-            console.log('生成的开发者工具选择器:', selector);
             return selector;
         } catch (error) {
-            console.warn('生成开发者工具选择器失败:', error);
             return null;
         }
     }
@@ -635,29 +630,24 @@ class DOMAttributeWatcher {
             const elements = document.querySelectorAll(selector);
             return elements.length === 1 && elements[0] === targetElement;
         } catch (error) {
-            console.warn('选择器验证失败:', selector, error);
             return false;
         }
     }
 
     async startWatching(elementSelector, attribute) {
         try {
-            console.log('开始监听 - CSS选择器:', elementSelector, '属性:', attribute);
 
             // 如果已经在监听，先停止当前监听
             if (this.isWatching || this.observer) {
-                console.log('检测到已有监听器，先清理旧的监听器');
                 this.stopWatching();
             }
 
             // 查找目标元素
             this.targetElement = this.findElementBySelector(elementSelector);
             if (!this.targetElement) {
-                console.error('无法找到元素，选择器:', elementSelector);
                 throw new Error(`找不到目标元素 (选择器: ${elementSelector})`);
             }
 
-            console.log('找到目标元素:', this.targetElement);
 
             this.targetAttribute = attribute;
             this.targetElementSelector = elementSelector;
@@ -677,7 +667,6 @@ class DOMAttributeWatcher {
                 lastValue = this.targetElement.getAttribute(attribute);
             }
 
-            console.log('属性初始值:', lastValue);
             this.addLog('开始监听', lastValue);
 
             // 创建MutationObserver - 使用异步处理避免阻塞页面
@@ -710,7 +699,6 @@ class DOMAttributeWatcher {
 
                             // 避免重复记录相同的变化
                             if (shouldLog && newValue !== lastValue) {
-                                console.log('检测到变化:', attribute, '新值:', newValue, '旧值:', lastValue);
 
                                 // 异步记录日志，避免频繁的消息发送
                                 this.addLogAsync('变化', newValue);
@@ -718,7 +706,6 @@ class DOMAttributeWatcher {
                             }
                         });
                     } catch (error) {
-                        console.error('MutationObserver回调处理失败:', error);
                     }
                 }, 0); // 下一个事件循环执行
             });
@@ -740,7 +727,6 @@ class DOMAttributeWatcher {
             // 开始观察
             this.observer.observe(this.targetElement, observeConfig);
 
-            console.log('MutationObserver已启动，配置:', observeConfig);
 
             this.saveState();
 
@@ -754,7 +740,6 @@ class DOMAttributeWatcher {
             return { success: true };
 
         } catch (error) {
-            console.error('启动监听失败:', error);
             return { success: false, error: error.message };
         }
     }
@@ -773,7 +758,6 @@ class DOMAttributeWatcher {
 
             return null;
         } catch (error) {
-            console.warn('查找元素失败:', selector, error);
             return null;
         }
     }
@@ -797,7 +781,6 @@ class DOMAttributeWatcher {
 
             return null;
         } catch (error) {
-            console.warn('按文本查找元素失败:', selector, error);
             return null;
         }
     }
@@ -808,7 +791,6 @@ class DOMAttributeWatcher {
             this.observer = null;
         }
 
-        console.log('停止监听');
 
         // 清理所有状态
         this.isWatching = false;
@@ -878,7 +860,6 @@ class DOMAttributeWatcher {
 
         // 如果是页面刷新，清理所有监听器
         if (isPageRefresh) {
-            console.log('页面刷新，清理所有监听器');
             // 断开所有观察器
             for (const [id, watcher] of this.watchers) {
                 if (watcher.observer) {
@@ -907,17 +888,18 @@ class DOMAttributeWatcher {
             name: watcher.name,
             selector: watcher.selector,
             attribute: watcher.attribute,
-            isWatching: !!watcher.observer
+            isWatching: !!watcher.observer,
+            serialNumber: watcher.serialNumber  // 保存序号
             // 注意：不保存element引用和observer，这些会在load时重新创建
         }));
 
         const state = {
             watchers: watchersData,
             logs: this.logs,
-            watcherIdCounter: this.watcherIdCounter
+            watcherIdCounter: this.watcherIdCounter,
+            globalSerialNumber: this.globalSerialNumber  // 保存全局序号计数器
         };
 
-        console.log('保存状态:', state);
         chrome.storage.local.set({ domWatcherState: state });
     }
 
@@ -927,9 +909,9 @@ class DOMAttributeWatcher {
             const state = result.domWatcherState;
 
             if (state) {
-                console.log('加载状态:', state);
                 this.logs = state.logs || [];
                 this.watcherIdCounter = state.watcherIdCounter || 1;
+                this.globalSerialNumber = state.globalSerialNumber || 1;  // 恢复全局序号计数器
 
                 // 恢复监听器列表（但不自动启动监听）
                 if (state.watchers && Array.isArray(state.watchers)) {
@@ -945,16 +927,14 @@ class DOMAttributeWatcher {
                                     selector: watcherData.selector,
                                     attribute: watcherData.attribute,
                                     observer: null, // 不自动恢复observer
-                                    lastValue: null
+                                    lastValue: null,
+                                    serialNumber: watcherData.serialNumber  // 恢复序号
                                 };
 
                                 this.watchers.set(watcherData.id, watcher);
-                                console.log('恢复监听器:', watcherData.name);
                             } else {
-                                console.warn('无法找到元素，跳过监听器:', watcherData.name, '选择器:', watcherData.selector);
                             }
                         } catch (error) {
-                            console.warn('恢复监听器失败:', watcherData.name, error);
                         }
                     }
                 }
@@ -965,10 +945,8 @@ class DOMAttributeWatcher {
                     this.watcherIdCounter = Math.max(this.watcherIdCounter, maxId + 1);
                 }
 
-                console.log('状态恢复完成，监听器数量:', this.watchers.size);
             }
         } catch (error) {
-            console.error('加载状态失败:', error);
         }
     }
 
@@ -976,19 +954,15 @@ class DOMAttributeWatcher {
     injectCommunicationScript() {
         // 检查是否已经注入过脚本
         if (document.querySelector('script[src*="injected.js"]')) {
-            console.log('注入脚本已存在，跳过');
             return;
         }
 
-        console.log('开始注入通信脚本');
         const script = document.createElement('script');
         script.src = chrome.runtime.getURL('injected.js');
         script.onload = function() {
-            console.log('注入脚本加载完成');
             this.remove();
         };
         script.onerror = function() {
-            console.error('注入脚本加载失败');
             this.remove();
         };
         (document.head || document.documentElement).appendChild(script);
@@ -996,63 +970,55 @@ class DOMAttributeWatcher {
 
     // 注入浮层面板脚本到页面
     injectFloatingPanelScript() {
-        console.log('=== 开始注入浮层面板脚本 ===');
 
         // 先注入简化测试版本
         if (!document.getElementById('testButton')) {
-            console.log('注入简化测试脚本');
             const testScript = document.createElement('script');
             testScript.src = chrome.runtime.getURL('test-simple.js');
             testScript.onload = () => {
-                console.log('简化测试脚本加载完成');
             };
             testScript.onerror = () => {
-                console.error('简化测试脚本加载失败');
             };
             (document.head || document.documentElement).appendChild(testScript);
         }
 
         // 检查是否已经存在浮层UI
         if (document.getElementById('domWatcherTrigger')) {
-            console.log('浮层UI已存在，跳过注入');
             return;
         }
 
         // 检查是否已经注入过脚本
         if (document.querySelector('script[src*="floating-panel.js"]')) {
-            console.log('浮层面板脚本已存在，等待UI创建');
             return;
         }
 
-        console.log('开始注入简化浮层面板脚本');
         const script = document.createElement('script');
         script.src = chrome.runtime.getURL('floating-panel-v2.js');
         script.onload = () => {
-            console.log('浮层面板脚本加载完成');
             // 等待一小段时间确保脚本执行完成
             setTimeout(() => {
                 if (!document.getElementById('domWatcherTrigger')) {
-                    console.warn('浮层UI未找到，可能脚本执行失败');
                 } else {
-                    console.log('浮层UI创建成功');
                 }
             }, 500);
         };
         script.onerror = (error) => {
-            console.error('浮层面板脚本加载失败:', error);
             // 尝试重试一次
             setTimeout(() => {
-                console.log('尝试重新注入浮层面板脚本');
                 this.injectFloatingPanelScript();
             }, 1000);
         };
         (document.head || document.documentElement).appendChild(script);
 
-        console.log('=== 浮层面板脚本注入请求已发送 ===');
     }
 
   // 处理来自浮层面板的消息
     async handleFloatingPanelMessage(message) {
+        // 检查message是否有效
+        if (!message || typeof message !== 'object') {
+            return;
+        }
+
         try {
             let response;
             switch (message.action) {
@@ -1088,7 +1054,8 @@ class DOMAttributeWatcher {
                             selector: watcher.selector,
                             attribute: watcher.attribute,
                             isWatching: !!watcher.observer,
-                            elementInfo: watcher.element ? this.getElementInfo(watcher.element) : null
+                            elementInfo: watcher.element ? this.getElementInfo(watcher.element) : null,
+                            serialNumber: watcher.serialNumber  // 包含序号
                         })),
                         logs: this.logs,
                         logsCount: this.logs.length
@@ -1124,7 +1091,6 @@ class DOMAttributeWatcher {
     // 添加新的监听器
     async addWatcher(elementSelector, attribute, name) {
         try {
-            console.log('添加监听器 - 选择器:', elementSelector, '属性:', attribute, '名称:', name);
 
             // 检查是否已存在相同的监听器
             for (const [id, watcher] of this.watchers) {
@@ -1140,6 +1106,13 @@ class DOMAttributeWatcher {
             }
 
             const watcherId = this.watcherIdCounter++;
+
+            // 分配序号 - 使用全局计数器，确保递增
+            if (!this.globalSerialNumber) {
+                this.globalSerialNumber = 1;
+            }
+            const serialNumber = this.globalSerialNumber++;
+
             const watcher = {
                 id: watcherId,
                 name: name || `监听器${watcherId}`,
@@ -1147,7 +1120,8 @@ class DOMAttributeWatcher {
                 selector: elementSelector,
                 attribute: attribute,
                 observer: null,
-                lastValue: null
+                lastValue: null,
+                serialNumber: serialNumber  // 添加序号
             };
 
             this.watchers.set(watcherId, watcher);
@@ -1167,14 +1141,14 @@ class DOMAttributeWatcher {
                     name: watcher.name,
                     selector: watcher.selector,
                     attribute: watcher.attribute,
-                    isWatching: true
+                    isWatching: true,
+                    serialNumber: serialNumber  // 添加序号
                 }
             });
 
             return { success: true, watcherId: watcherId };
 
         } catch (error) {
-            console.error('添加监听器失败:', error);
             return { success: false, error: error.message };
         }
     }
@@ -1183,7 +1157,6 @@ class DOMAttributeWatcher {
     removeWatcher(watcherId) {
         const watcher = this.watchers.get(watcherId);
         if (!watcher) {
-            console.warn('监听器不存在:', watcherId);
             return;
         }
 
@@ -1199,7 +1172,6 @@ class DOMAttributeWatcher {
         // 从列表中移除
         this.watchers.delete(watcherId);
 
-        console.log('监听器已移除:', watcherId);
 
         // 保存状态
         this.saveState();
@@ -1273,74 +1245,66 @@ class DOMAttributeWatcher {
         }
 
         watcher.lastValue = lastValue;
-        console.log('监听器初始值:', lastValue);
 
         // 记录开始监听日志
         this.addLogForWatcher(watcher, '开始监听', lastValue);
 
-        // 创建MutationObserver
+        // 创建MutationObserver - 立刻响应变化
         watcher.observer = new MutationObserver((mutations) => {
-            // 使用异步处理，避免阻塞页面
-            setTimeout(() => {
-                try {
-                    // 检查元素是否仍然存在
-                    if (!document.contains(watcher.element)) {
-                        console.log('元素已被移除，停止监听:', watcher.id);
-                        this.removeWatcher(watcher.id);
-                        return;
+            try {
+                // 检查元素是否仍然存在
+                if (!document.contains(watcher.element)) {
+                    this.removeWatcher(watcher.id);
+                    return;
+                }
+
+                mutations.forEach((mutation) => {
+                    let newValue;
+                    let shouldLog = false;
+
+                    if (mutation.type === 'attributes' && mutation.attributeName === watcher.attribute) {
+                        newValue = watcher.element.getAttribute(watcher.attribute);
+                        shouldLog = true;
+                    } else if (mutation.type === 'characterData' || (mutation.type === 'childList' && watcher.attribute.includes('text'))) {
+                        if (watcher.attribute === 'textContent') {
+                            newValue = watcher.element.textContent || '';
+                        } else if (watcher.attribute === 'innerText') {
+                            newValue = watcher.element.innerText || '';
+                        } else if (watcher.attribute === 'innerHTML') {
+                            newValue = watcher.element.innerHTML || '';
+                        } else {
+                            return;
+                        }
+                        shouldLog = true;
                     }
 
-                    mutations.forEach((mutation) => {
-                        let newValue;
-                        let shouldLog = false;
-
-                        if (mutation.type === 'attributes' && mutation.attributeName === watcher.attribute) {
-                            newValue = watcher.element.getAttribute(watcher.attribute);
-                            shouldLog = true;
-                        } else if (mutation.type === 'characterData' || (mutation.type === 'childList' && watcher.attribute.includes('text'))) {
-                            if (watcher.attribute === 'textContent') {
-                                newValue = watcher.element.textContent || '';
-                            } else if (watcher.attribute === 'innerText') {
-                                newValue = watcher.element.innerText || '';
-                            } else if (watcher.attribute === 'innerHTML') {
-                                newValue = watcher.element.innerHTML || '';
-                            } else {
-                                return;
-                            }
-                            shouldLog = true;
-                        }
-
-                        // 避免重复记录相同的变化
-                        if (shouldLog && newValue !== watcher.lastValue) {
-                            console.log('监听器检测到变化:', watcher.id, watcher.attribute, '新值:', newValue, '旧值:', watcher.lastValue);
-
-                            this.addLogForWatcher(watcher, '变化', newValue);
-                            watcher.lastValue = newValue;
-                        }
-                    });
-                } catch (error) {
-                    console.error('监听器回调处理失败:', watcher.id, error);
-                }
-            }, 0);
+                    // 避免重复记录相同的变化
+                    if (shouldLog && newValue !== watcher.lastValue) {
+                        this.addLogForWatcher(watcher, '变化', newValue);
+                        watcher.lastValue = newValue;
+                    }
+                });
+            } catch (error) {
+            }
         });
 
-        // 确定观察配置
+        // 确定观察配置 - 严格控制监听范围
         const observeConfig = {
             attributes: true,
             attributeFilter: [watcher.attribute],
             attributeOldValue: true
         };
 
+        // 只有监听文本内容时才使用更广的观察范围
         if (watcher.attribute === 'textContent' || watcher.attribute === 'innerText' || watcher.attribute === 'innerHTML') {
             observeConfig.childList = true;
             observeConfig.characterData = true;
-            observeConfig.subtree = true;
+            // 不要设置 subtree: true，避免监听过多不相关的子元素变化
         }
 
-        // 开始观察
+        // 开始观察特定元素
         watcher.observer.observe(watcher.element, observeConfig);
 
-        console.log('监听器已启动:', watcher.id, '配置:', observeConfig);
     }
 
     // 为特定监听器添加日志
@@ -1361,6 +1325,7 @@ class DOMAttributeWatcher {
             type,
             watcherId: watcher.id,
             watcherName: watcher.name,
+            watcherSerialNumber: watcher.serialNumber,  // 添加序号
             elementInfo: this.getElementInfo(watcher.element),
             attribute: watcher.attribute,
             newValue
@@ -1388,7 +1353,6 @@ class DOMAttributeWatcher {
         try {
             chrome.runtime.sendMessage(message);
         } catch (error) {
-            console.warn('发送消息失败:', error);
         }
 
         // 发送到浮层面板
@@ -1398,7 +1362,6 @@ class DOMAttributeWatcher {
                 data: message
             }, '*');
         } catch (error) {
-            console.warn('发送消息到浮层面板失败:', error);
         }
     }
 }

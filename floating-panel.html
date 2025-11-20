@@ -61,31 +61,51 @@
                 <div id="elementInfoContent"></div>
             </div>
 
-            <!-- 日志区域 -->
-            <div class="dom-watcher-logs">
-                <div class="dom-watcher-logs-header">
-                    <div class="dom-watcher-logs-title">
-                        <span>📋</span>
-                        <span>监听日志</span>
-                        <span id="logCount" class="dom-watcher-log-count">(0)</span>
+            <!-- 主要内容区域 -->
+            <div class="dom-watcher-main-content">
+                <!-- 监听器区域 (1/3高度) -->
+                <div class="dom-watcher-listeners-section">
+                    <div class="dom-watcher-listeners-header">
+                        <span class="dom-watcher-listeners-title">
+                            <span>🎯</span>
+                            <span>监听器</span>
+                        </span>
+                        <span id="listenerCount" class="dom-watcher-listener-count">(0)</span>
                     </div>
-                    <div class="dom-watcher-logs-actions">
-                        <button id="exportLogs" class="dom-watcher-btn dom-watcher-btn-primary dom-watcher-btn-small" title="导出日志">
-                            <span>📤</span>
-                        </button>
+                    <div id="listenersList" class="dom-watcher-listeners-list">
+                        <div class="dom-watcher-empty-listeners">
+                            <span class="dom-watcher-empty-icon">🎯</span>
+                            <span>暂无监听器</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 搜索框 -->
-                <div class="dom-watcher-search">
-                    <input type="text" id="searchBox" class="dom-watcher-search-input" placeholder="搜索元素、属性或时间...">
-                </div>
+                <!-- 日志区域 (2/3高度) -->
+                <div class="dom-watcher-logs-section">
+                    <div class="dom-watcher-logs-header">
+                        <div class="dom-watcher-logs-title">
+                            <span>📋</span>
+                            <span>监听日志</span>
+                            <span id="logCount" class="dom-watcher-log-count">(0)</span>
+                        </div>
+                        <div class="dom-watcher-logs-actions">
+                            <button id="exportLogs" class="dom-watcher-btn dom-watcher-btn-primary dom-watcher-btn-small" title="导出日志">
+                                <span>📤</span>
+                            </button>
+                        </div>
+                    </div>
 
-                <!-- 日志内容 -->
-                <div id="logContent" class="dom-watcher-log-content">
-                    <div class="dom-watcher-empty-state">
-                        <span class="dom-watcher-empty-icon">📭</span>
-                        <span>暂无日志数据</span>
+                    <!-- 搜索框 -->
+                    <div class="dom-watcher-search">
+                        <input type="text" id="searchBox" class="dom-watcher-search-input" placeholder="搜索元素、属性或时间...">
+                    </div>
+
+                    <!-- 日志内容 -->
+                    <div id="logContent" class="dom-watcher-log-content">
+                        <div class="dom-watcher-empty-state">
+                            <span class="dom-watcher-empty-icon">📭</span>
+                            <span>暂无日志数据</span>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,4 @@
 // DOM监听器浮层面板控制器
-console.log('DOM监听器浮层面板脚本已加载');
 
 class FloatingPanelController {
     constructor() {
@@ -16,8 +15,6 @@ class FloatingPanelController {
     }
 
     init() {
-        console.log('初始化浮层面板控制器');
-
         // 创建浮层UI
         this.createFloatingUI();
 
@@ -29,18 +26,13 @@ class FloatingPanelController {
 
         // 加载初始数据
         this.loadInitialData();
-
-        console.log('浮层面板控制器初始化完成');
     }
 
     createFloatingUI() {
         // 检查是否已存在浮层UI
         if (document.getElementById('domWatcherPanel')) {
-            console.log('浮层UI已存在');
             return;
         }
-
-        console.log('开始创建浮层UI');
 
         // 直接创建UI元素，不依赖fetch
         const container = document.createElement('div');
@@ -167,7 +159,6 @@ class FloatingPanelController {
         const appendToBody = () => {
             if (document.body) {
                 document.body.appendChild(container);
-                console.log('浮层UI已添加到页面');
             } else {
                 setTimeout(appendToBody, 100);
             }
@@ -183,7 +174,6 @@ class FloatingPanelController {
             const panel = document.getElementById('domWatcherPanel');
 
             if (triggerBtn && panel) {
-                console.log('UI元素已就绪，开始绑定事件');
                 this.bindPanelEvents();
             } else {
                 setTimeout(waitForElements, 50);
@@ -255,8 +245,6 @@ class FloatingPanelController {
 
         // 导出对话框事件
         this.bindExportDialogEvents();
-
-        console.log('浮层面板事件绑定完成');
     }
 
     bindExportDialogEvents() {
@@ -309,8 +297,6 @@ class FloatingPanelController {
                 this.handleMessage(message.data);
             }
         });
-
-        console.log('浮层面板通信初始化完成');
     }
 
     sendMessage(action, data = {}) {
@@ -362,7 +348,6 @@ class FloatingPanelController {
     }
 
     handleMessage(message) {
-        console.log('浮层面板收到消息:', message);
 
         switch (message.action) {
             case 'elementSelected':
@@ -426,7 +411,6 @@ class FloatingPanelController {
 
     async startElementCapture() {
         try {
-            console.log('开始元素捕获');
             this.isCapturing = true;
 
             await this.sendMessage('startCapture');
@@ -437,14 +421,12 @@ class FloatingPanelController {
                 startCaptureBtn.innerHTML = '<span>❌</span><span>取消选择</span>';
             }
         } catch (error) {
-            console.error('启动元素捕获失败:', error);
             alert('启动元素捕获失败: ' + error.message);
         }
     }
 
     async stopElementCapture() {
         try {
-            console.log('停止元素捕获');
             this.isCapturing = false;
 
             await this.sendMessage('stopCapture');
@@ -455,7 +437,7 @@ class FloatingPanelController {
                 startCaptureBtn.innerHTML = '<span>🎯</span><span>选择元素</span>';
             }
         } catch (error) {
-            console.error('停止元素捕获失败:', error);
+            // 忽略错误
         }
     }
 
@@ -478,8 +460,6 @@ class FloatingPanelController {
             const attribute = attributeSelect.value;
             const elementSelector = this.elementInfo.cssSelector;
 
-            console.log('开始监听:', elementSelector, attribute);
-
             const response = await this.sendMessage('startWatching', {
                 elementSelector,
                 attribute
@@ -493,7 +473,6 @@ class FloatingPanelController {
                 throw new Error(response ? response.error : '未知错误');
             }
         } catch (error) {
-            console.error('启动监听失败:', error);
             this.updateStatus('启动监听失败', false);
             alert('启动监听失败: ' + error.message);
         }
@@ -501,8 +480,6 @@ class FloatingPanelController {
 
     async stopListening() {
         try {
-            console.log('停止监听');
-
             const response = await this.sendMessage('stopWatching');
 
             if (response && response.success) {
@@ -513,54 +490,50 @@ class FloatingPanelController {
                 throw new Error(response ? response.error : '未知错误');
             }
         } catch (error) {
-            console.error('停止监听失败:', error);
             alert('停止监听失败: ' + error.message);
         }
     }
 
     async clearLogs() {
         try {
-            console.log('清空日志');
             await this.sendMessage('clearLogs');
         } catch (error) {
-            console.error('清空日志失败:', error);
             alert('清空日志失败: ' + error.message);
         }
     }
 
     async refreshConnection() {
-        console.log('刷新连接');
         this.updateConnectionStatus(true);
         await this.loadInitialData();
     }
 
     handleElementSelected(elementInfo) {
-        console.log('元素已选择:', elementInfo);
         this.pendingElementInfo = elementInfo;
         this.showAttributeDialog();
     }
 
     handleWatcherAdded(watcherId, watcher) {
-        console.log('监听器已添加:', watcherId, watcher);
         this.watchers.set(watcherId, {
             ...watcher,
-            elementInfo: null // 会在状态更新时填充
+            elementInfo: null, // 会在状态更新时填充
+            number: this.watchers.size + 1 // 分配编号
         });
+        // 重新编号所有监听器以确保连续性
+        this.renumberWatchers();
         this.updateWatcherList();
         this.updateLogFilter();
         this.updateStatus(`监听器已添加: ${watcher.name}`, false);
     }
 
     handleWatcherRemoved(watcherId) {
-        console.log('监听器已移除:', watcherId);
         this.watchers.delete(watcherId);
+        this.renumberWatchers();
         this.updateWatcherList();
         this.updateLogFilter();
         this.updateStatus('监听器已移除', false);
     }
 
     handleWatchingStarted(watcherId, elementInfo) {
-        console.log('监听已开始:', watcherId, elementInfo);
         const watcher = this.watchers.get(watcherId);
         if (watcher) {
             watcher.isWatching = true;
@@ -571,7 +544,6 @@ class FloatingPanelController {
     }
 
     handleWatchingStopped(watcherId) {
-        console.log('监听已停止:', watcherId);
         const watcher = this.watchers.get(watcherId);
         if (watcher) {
             watcher.isWatching = false;
@@ -581,21 +553,18 @@ class FloatingPanelController {
     }
 
     handleNewLog(logEntry) {
-        console.log('新日志:', logEntry);
         this.logs.unshift(logEntry);
         this.updateLogDisplay();
         this.updateLogCount();
     }
 
     handleLogsCleared() {
-        console.log('日志已清空');
         this.logs = [];
         this.updateLogDisplay();
         this.updateLogCount();
     }
 
     handleStatusUpdate(status) {
-        console.log('状态更新:', status);
         this.isConnected = status.connected;
 
         if (status.logs) {
@@ -605,8 +574,11 @@ class FloatingPanelController {
         // 更新监听器列表
         if (status.watchers) {
             this.watchers.clear();
-            status.watchers.forEach(watcher => {
-                this.watchers.set(watcher.id, watcher);
+            status.watchers.forEach((watcher, index) => {
+                this.watchers.set(watcher.id, {
+                    ...watcher,
+                    number: index + 1
+                });
             });
             this.updateWatcherList();
             this.updateLogFilter();
@@ -619,8 +591,6 @@ class FloatingPanelController {
 
     async loadInitialData() {
         try {
-            console.log('加载初始数据');
-
             let retryCount = 0;
             const maxRetries = 5;
             let response = null;
@@ -629,11 +599,9 @@ class FloatingPanelController {
                 try {
                     response = await this.sendMessage('getStatus');
                     if (response) {
-                        console.log('成功获取状态数据');
                         break;
                     }
                 } catch (error) {
-                    console.log(`尝试 ${retryCount + 1}/${maxRetries} 失败:`, error.message);
                     retryCount++;
                     if (retryCount < maxRetries) {
                         await new Promise(resolve => setTimeout(resolve, 500));
@@ -642,14 +610,12 @@ class FloatingPanelController {
             }
 
             if (!response) {
-                console.warn('无法连接到注入脚本');
                 this.updateConnectionStatus(false);
                 return;
             }
 
             this.handleStatusUpdate(response);
         } catch (error) {
-            console.error('加载初始数据失败:', error);
             this.updateConnectionStatus(false);
         }
     }
@@ -787,11 +753,14 @@ class FloatingPanelController {
         if (this.currentSearchTerm) {
             const lowerSearchTerm = this.currentSearchTerm.toLowerCase();
             filteredLogs = filteredLogs.filter(log => {
+                const watcher = this.watchers.get(log.watcherId);
+                const watcherNumber = watcher ? watcher.number : '';
                 return (
                     log.elementInfo?.tagName?.toLowerCase().includes(lowerSearchTerm) ||
                     log.attribute?.toLowerCase().includes(lowerSearchTerm) ||
                     log.newValue?.toLowerCase().includes(lowerSearchTerm) ||
                     log.watcherName?.toLowerCase().includes(lowerSearchTerm) ||
+                    watcherNumber.toString().includes(lowerSearchTerm) ||
                     log.timeString?.includes(this.currentSearchTerm)
                 );
             });
@@ -811,13 +780,15 @@ class FloatingPanelController {
         const logHtml = filteredLogs.slice(0, 50).map(log => {
             const selector = log.elementInfo?.cssSelector || '未知选择器';
             const value = log.newValue || '';
+            const watcher = this.watchers.get(log.watcherId);
+            const watcherNumber = watcher ? watcher.number : '?';
             const watcherName = log.watcherName || '未知监听器';
 
             return `
                 <div class="dom-watcher-log-item ${this.currentSearchTerm ? 'highlight' : ''}">
                     <div class="dom-watcher-log-time">⏰ ${log.timeString}</div>
                     <div class="dom-watcher-log-info">
-                        <span class="dom-watcher-log-selector">🎯 ${watcherName}</span>
+                        <span class="dom-watcher-log-selector">🎯 ${watcherNumber}# ${watcherName}</span>
                         <span class="dom-watcher-log-attr">🏷️ ${log.attribute}:</span>
                         <span class="dom-watcher-log-value">"${value}"</span>
                     </div>
@@ -879,7 +850,10 @@ class FloatingPanelController {
 
         const content = logs.map((log, index) => {
             const selector = log.elementInfo?.cssSelector || '未知选择器';
-            return `${log.timeString} | ${selector} | ${log.attribute}: "${log.newValue}"`;
+            const watcher = this.watchers.get(log.watcherId);
+            const watcherNumber = watcher ? watcher.number : '?';
+            const watcherName = log.watcherName || '未知监听器';
+            return `${log.timeString} | ${watcherNumber}# ${watcherName} | ${log.attribute}: "${log.newValue}"`;
         }).join('\n');
 
         const blob = new Blob([header + content], { type: 'text/plain;charset=utf-8' });
@@ -1002,14 +976,21 @@ class FloatingPanelController {
             });
 
             if (response && response.success) {
-                console.log('监听器添加成功:', response.watcherId);
+                // 监听器添加成功
             } else {
                 throw new Error(response ? response.error : '未知错误');
             }
         } catch (error) {
-            console.error('添加监听器失败:', error);
             alert('添加监听器失败: ' + error.message);
         }
+    }
+
+    // 重新为所有监听器编号
+    renumberWatchers() {
+        let number = 1;
+        this.watchers.forEach((watcher, id) => {
+            watcher.number = number++;
+        });
     }
 
     // 更新监听列表显示
@@ -1047,21 +1028,18 @@ class FloatingPanelController {
         }
 
         const listHtml = Array.from(this.watchers.entries()).map(([id, watcher]) => {
+            const watcherNumber = watcher.number || Array.from(this.watchers.keys()).indexOf(id) + 1;
             return `
                 <div class="dom-watcher-item ${watcher.isWatching ? 'active' : ''}" data-watcher-id="${id}">
                     <div class="dom-watcher-item-header">
                         <div class="dom-watcher-item-info">
                             <span class="dom-watcher-item-icon">🎯</span>
+                            <span class="dom-watcher-item-number">${watcherNumber}#</span>
                             <span class="dom-watcher-item-name">${watcher.name}</span>
-                            <span class="dom-watcher-item-status ${watcher.isWatching ? 'watching' : ''}"></span>
-                        </div>
-                        <div class="dom-watcher-item-actions">
-                            <button class="dom-watcher-item-btn toggle" title="${watcher.isWatching ? '停止监听' : '开始监听'}">
-                                ${watcher.isWatching ? '⏸️' : '▶️'}
-                            </button>
-                            <button class="dom-watcher-item-btn delete" title="删除监听器">
+                            <button class="dom-watcher-item-btn delete" title="删除监听器" style="margin-left: 6px;">
                                 ❌
                             </button>
+                            <span class="dom-watcher-item-status ${watcher.isWatching ? 'watching' : ''}"></span>
                         </div>
                     </div>
                     <div class="dom-watcher-item-details">
@@ -1082,14 +1060,7 @@ class FloatingPanelController {
     bindWatcherItemEvents() {
         document.querySelectorAll('.dom-watcher-item').forEach(item => {
             const watcherId = parseInt(item.dataset.watcherId);
-            const toggleBtn = item.querySelector('.toggle');
             const deleteBtn = item.querySelector('.delete');
-
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    this.toggleWatcher(watcherId);
-                });
-            }
 
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', () => {
@@ -1099,19 +1070,7 @@ class FloatingPanelController {
         });
     }
 
-    // 切换监听器状态
-    async toggleWatcher(watcherId) {
-        try {
-            const response = await this.sendMessage('toggleWatcher', { watcherId });
-            if (!response || !response.success) {
-                throw new Error(response ? response.error : '未知错误');
-            }
-        } catch (error) {
-            console.error('切换监听器状态失败:', error);
-            alert('切换监听器状态失败: ' + error.message);
-        }
-    }
-
+    
     // 移除监听器
     async removeWatcher(watcherId) {
         if (!confirm('确定要删除这个监听器吗？')) {
@@ -1124,7 +1083,6 @@ class FloatingPanelController {
                 throw new Error(response ? response.error : '未知错误');
             }
         } catch (error) {
-            console.error('移除监听器失败:', error);
             alert('移除监听器失败: ' + error.message);
         }
     }
@@ -1141,7 +1099,8 @@ class FloatingPanelController {
         this.watchers.forEach((watcher, id) => {
             const option = document.createElement('option');
             option.value = id.toString();
-            option.textContent = watcher.name;
+            const watcherNumber = watcher.number || '?';
+            option.textContent = `${watcherNumber}# ${watcher.name}`;
             filterSelect.appendChild(option);
         });
 
@@ -1154,17 +1113,13 @@ class FloatingPanelController {
 
 // 确保脚本执行后立即初始化
 function initializeFloatingPanel() {
-    console.log('开始初始化浮层面板控制器');
     try {
         // 只有当面板不存在时才初始化
         if (!document.getElementById('domWatcherPanel')) {
             new FloatingPanelController();
-            console.log('浮层面板控制器初始化完成');
-        } else {
-            console.log('浮层面板已存在，跳过初始化');
         }
     } catch (error) {
-        console.error('浮层面板控制器初始化失败:', error);
+        // 初始化失败，静默处理
     }
 }
 
