@@ -246,10 +246,10 @@ class DOMAttributeWatcher {
         const tempId = `selected-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
         element.setAttribute('data-dom-watcher-selected', tempId);
 
-        console.log(`=== 用户选择了元素 ===`);
-        console.log(`元素:`, element);
-        console.log(`临时选择标识: ${tempId}`);
-        console.log(`CSS选择器: ${cssSelector}`);
+        // console.log(`=== 用户选择了元素 ===`);
+        // console.log(`元素:`, element);
+        // console.log(`临时选择标识: ${tempId}`);
+        // console.log(`CSS选择器: ${cssSelector}`);
 
         // 发送调试信息到页面（用于调试页面显示）
         try {
@@ -381,26 +381,26 @@ class DOMAttributeWatcher {
         }
 
         // 调试信息：查看元素详情
-        console.log('=== 选择元素详情 ===', {
-            tagName: element.tagName,
-            id: element.id,
-            className: element.className,
-            name: element.name,
-            type: element.type,
-            placeholder: element.placeholder,
-            value: element.value,
-            allAttributes: Array.from(element.attributes).map(a => ({name: a.name, value: a.value})),
-            parentElement: element.parentElement ? element.parentElement.tagName : null,
-            parentClassName: element.parentElement ? element.parentElement.className : null,
-            siblings: element.parentElement ? Array.from(element.parentElement.children).map((child, idx) => ({
-                index: idx,
-                tagName: child.tagName,
-                className: child.className
-            })) : null,
-            nthOfType: element.parentElement ? Array.from(element.parentElement.children)
-                .filter(child => child.tagName === element.tagName)
-                .indexOf(element) + 1 : null
-        });
+        // console.log('=== 选择元素详情 ===', {
+        //     tagName: element.tagName,
+        //     id: element.id,
+        //     className: element.className,
+        //     name: element.name,
+        //     type: element.type,
+        //     placeholder: element.placeholder,
+        //     value: element.value,
+        //     allAttributes: Array.from(element.attributes).map(a => ({name: a.name, value: a.value})),
+        //     parentElement: element.parentElement ? element.parentElement.tagName : null,
+        //     parentClassName: element.parentElement ? element.parentElement.className : null,
+        //     siblings: element.parentElement ? Array.from(element.parentElement.children).map((child, idx) => ({
+        //         index: idx,
+        //         tagName: child.tagName,
+        //         className: child.className
+        //     })) : null,
+        //     nthOfType: element.parentElement ? Array.from(element.parentElement.children)
+        //         .filter(child => child.tagName === element.tagName)
+        //         .indexOf(element) + 1 : null
+        // });
 
         // 策略1: 优先使用唯一ID（排除root）
         if (element.id && element.id !== 'root' && this.validateSelector(`#${element.id}`, element)) {
@@ -988,55 +988,56 @@ class DOMAttributeWatcher {
     // 根据选择器查找元素（支持特殊选择器）
     findElementBySelector(selector, useTempId = null) {
         try {
-            console.log('查找元素，选择器:', selector);
+            // console.log('查找元素，选择器:', selector);
 
             // 如果有临时标识，优先使用
             if (useTempId) {
                 const element = document.querySelector(`[data-dom-watcher-selected="${useTempId}"]`);
                 if (element) {
-                    console.log('通过临时标识找到元素:', element);
+                    // console.log('通过临时标识找到元素:', element);
                     // 找到后清理临时标识
                     element.removeAttribute('data-dom-watcher-selected');
                     return element;
                 } else {
-                    console.log('临时标识未找到元素:', useTempId);
+                    // console.log('临时标识未找到元素:', useTempId);
                 }
             }
 
             // 首先尝试标准CSS选择器
             const elements = document.querySelectorAll(selector);
-            console.log('匹配到的元素数量:', elements.length);
+            // console.log('匹配到的元素数量:', elements.length);
 
             if (elements.length === 0) {
                 // 如果标准选择器失败，尝试处理特殊选择器
                 if (selector.includes('[text=')) {
                     const element = this.findElementByText(selector);
-                    console.log('通过文本找到的元素:', element);
+                    // console.log('通过文本找到的元素:', element);
                     return element;
                 }
                 return null;
             }
 
             if (elements.length === 1) {
-                console.log('精确匹配到唯一元素:', elements[0]);
+                // console.log('精确匹配到唯一元素:', elements[0]);
                 return elements[0];
             }
 
             // 如果匹配到多个元素，尝试更精确的匹配
-            console.log('匹配到多个元素，尝试精确匹配:', Array.from(elements).map(el => ({
-                tagName: el.tagName,
-                className: el.className,
-                id: el.id,
-                name: el.name,
-                type: el.type,
-                value: el.value,
-                placeholder: el.placeholder,
-                textContent: el.textContent ? el.textContent.substring(0, 50) : ''
-            })));
+            // const elementsInfo = Array.from(elements).map(el => ({
+            //     tagName: el.tagName,
+            //     className: el.className,
+            //     id: el.id,
+            //     name: el.name,
+            //     type: el.type,
+            //     value: el.value,
+            //     placeholder: el.placeholder,
+            //     textContent: el.textContent ? el.textContent.substring(0, 50) : ''
+            // }));
+            // console.log('匹配到多个元素，尝试精确匹配:', elementsInfo);
 
             return this.findBestMatch(selector, elements);
         } catch (error) {
-            console.error('查找元素时出错:', error);
+            // console.error('查找元素时出错:', error);
             return null;
         }
     }
@@ -1046,14 +1047,14 @@ class DOMAttributeWatcher {
         // 如果有ID，优先选择有ID的元素
         const withId = Array.from(elements).filter(el => el.id && el.id !== 'root');
         if (withId.length === 1) {
-            console.log('通过ID找到唯一元素:', withId[0]);
+            // console.log('通过ID找到唯一元素:', withId[0]);
             return withId[0];
         }
 
         // 如果有name属性，优先选择有name的元素
         const withName = Array.from(elements).filter(el => el.name);
         if (withName.length === 1) {
-            console.log('通过name找到唯一元素:', withName[0]);
+            // console.log('通过name找到唯一元素:', withName[0]);
             return withName[0];
         }
 
@@ -1063,7 +1064,7 @@ class DOMAttributeWatcher {
 
     // 精确元素匹配
     preciseElementMatch(originalSelector, elements) {
-        console.log('尝试精确匹配，原始选择器:', originalSelector);
+        // console.log('尝试精确匹配，原始选择器:', originalSelector);
 
         // 对于表单元素，添加更多属性进行匹配
         const elementDetails = Array.from(elements).map(el => ({
@@ -1089,7 +1090,7 @@ class DOMAttributeWatcher {
 
         // 分析选择器中的关键信息
         const selectorInfo = this.analyzeSelector(originalSelector);
-        console.log('选择器分析:', selectorInfo);
+        // console.log('选择器分析:', selectorInfo);
 
         // 根据选择器中的信息找到最匹配的元素
         let bestMatch = null;
@@ -1104,13 +1105,13 @@ class DOMAttributeWatcher {
                 if (element.name) {
                     bestMatch = element;
                     bestScore = 100;
-                    console.log(`通过name属性找到元素:`, element);
+                    // console.log(`通过name属性找到元素:`, element);
                     break;
                 }
                 if (element.id && element.id !== 'root') {
                     bestMatch = element;
                     bestScore = 200;
-                    console.log(`通过ID找到元素:`, element);
+                    // console.log(`通过ID找到元素:`, element);
                     break;
                 }
             }
@@ -1197,11 +1198,11 @@ class DOMAttributeWatcher {
             if (score > bestScore) {
                 bestScore = score;
                 bestMatch = element;
-                console.log(`找到更好的匹配，得分: ${score} (索引: ${index})`, element);
+                // console.log(`找到更好的匹配，得分: ${score} (索引: ${index})`, element);
             }
         }
 
-        console.log('最佳匹配元素:', bestMatch, '得分:', bestScore);
+        // console.log('最佳匹配元素:', bestMatch, '得分:', bestScore);
         return bestMatch;
     }
 
@@ -1260,7 +1261,7 @@ class DOMAttributeWatcher {
             info.classes = classMatches.map(cls => cls.substring(1));
         }
 
-        console.log('选择器分析结果:', info);
+        // console.log('选择器分析结果:', info);
         return info;
     }
 
@@ -1360,32 +1361,37 @@ class DOMAttributeWatcher {
     clearLogs(isPageRefresh = false) {
         this.logs = [];
 
-        // 清理所有监听器的标识（无论是页面刷新还是主动清空）
-        for (const [id, watcher] of this.watchers) {
-            // 停止观察器
-            if (watcher.observer) {
-                watcher.observer.disconnect();
-                watcher.observer = null;
-            }
-
-            // 移除元素上的标识属性
-            if (watcher.element && watcher.uniqueId) {
-                const currentId = watcher.element.getAttribute('data-dom-watcher-id');
-                if (currentId === watcher.uniqueId) {
-                    watcher.element.removeAttribute('data-dom-watcher-id');
-                    console.log(`清空时移除监听器 ${id} 的元素标识: ${watcher.uniqueId}`);
+        if (isPageRefresh) {
+            // 页面刷新时清理所有监听器
+            for (const [id, watcher] of this.watchers) {
+                // 停止观察器
+                if (watcher.observer) {
+                    watcher.observer.disconnect();
+                    watcher.observer = null;
                 }
+
+                // 移除元素上的标识属性
+                if (watcher.element && watcher.uniqueId) {
+                    const currentId = watcher.element.getAttribute('data-dom-watcher-id');
+                    if (currentId === watcher.uniqueId) {
+                        watcher.element.removeAttribute('data-dom-watcher-id');
+                        // console.log(`页面刷新时移除监听器 ${id} 的元素标识: ${watcher.uniqueId}`);
+                    }
+                }
+
+                // 清理引用
+                watcher.element = null;
             }
 
-            // 清理引用
-            watcher.element = null;
+            // 清空所有监听器
+            this.watchers.clear();
+
+            // 重置序号计数器
+            this.nextSerialNumber = 1;
+        } else {
+            // 主动清空日志时，保留监听器，只清空日志
+            // console.log('主动清空日志，保留监听器');
         }
-
-        // 清空所有监听器
-        this.watchers.clear();
-
-        // 重置序号计数器
-        this.nextSerialNumber = 1;
 
         // 不保存状态，保持全新
 
@@ -1550,7 +1556,7 @@ class DOMAttributeWatcher {
     // 添加新的监听器
     async addWatcher(elementSelector, attribute, name, tempId = null) {
         try {
-            console.log('内容脚本：收到addWatcher请求', { elementSelector, attribute, name, tempId });
+            // console.log('内容脚本：收到addWatcher请求', { elementSelector, attribute, name, tempId });
 
             // 查找目标元素，优先使用临时标识
             const element = this.findElementBySelector(elementSelector, tempId);
@@ -1568,10 +1574,10 @@ class DOMAttributeWatcher {
                 }
             }
 
-            console.log(`=== 添加新监听器 ===`);
-            console.log(`原始选择器: ${elementSelector}`);
-            console.log(`属性: ${attribute}`);
-            console.log(`找到的元素:`, element);
+            // console.log(`=== 添加新监听器 ===`);
+            // console.log(`原始选择器: ${elementSelector}`);
+            // console.log(`属性: ${attribute}`);
+            // console.log(`找到的元素:`, element);
 
             const watcherId = this.watcherIdCounter++;
 
@@ -1581,28 +1587,28 @@ class DOMAttributeWatcher {
             // 为元素添加唯一标识属性，包含监听器ID和序号
             const uniqueId = `watch${serialNumber}#${watcherId}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 6)}`;
 
-            console.log(`新监听器ID: ${watcherId}, 序号: ${serialNumber}`);
-            console.log(`唯一标识: ${uniqueId}`);
+            // console.log(`新监听器ID: ${watcherId}, 序号: ${serialNumber}`);
+            // console.log(`唯一标识: ${uniqueId}`);
 
             // 检查元素是否已有其他监听器的标识
             const existingWatcherAttr = element.getAttribute('data-dom-watcher-id');
             if (existingWatcherAttr) {
-                console.log('警告：此元素已有监听器标识:', existingWatcherAttr);
-                console.log('这可能会导致多个监听器绑定到同一元素');
+                // console.log('警告：此元素已有监听器标识:', existingWatcherAttr);
+                // console.log('这可能会导致多个监听器绑定到同一元素');
 
                 // 查找哪个监听器在使用这个标识
                 const existingWatcher = Array.from(this.watchers.values()).find(w => w.uniqueId === existingWatcherAttr);
                 if (existingWatcher) {
-                    console.log(`发现冲突：监听器 ${existingWatcher.name} (ID: ${existingWatcher.id}) 已在使用此元素`);
+                    // console.log(`发现冲突：监听器 ${existingWatcher.name} (ID: ${existingWatcher.id}) 已在使用此元素`);
                     throw new Error('该元素已被监听器 "' + existingWatcher.name + '" 使用，请选择其他元素');
                 } else {
                     // 标识存在但找不到对应监听器，可能是残留数据，可以安全覆盖
-                    console.log('清理残留的标识:', existingWatcherAttr);
+                    // console.log('清理残留的标识:', existingWatcherAttr);
                 }
             }
 
             element.setAttribute('data-dom-watcher-id', uniqueId);
-            console.log('已设置新元素标识:', element.getAttribute('data-dom-watcher-id'));
+            // console.log('已设置新元素标识:', element.getAttribute('data-dom-watcher-id'));
 
             // 使用优化的选择器（优先使用我们的唯一属性）
             const optimizedSelector = `[data-dom-watcher-id="${uniqueId}"]`;
@@ -1652,11 +1658,11 @@ class DOMAttributeWatcher {
     removeWatcher(watcherId) {
         const watcher = this.watchers.get(watcherId);
         if (!watcher) {
-            console.log(`监听器 ${watcherId} 不存在`);
+            // console.log(`监听器 ${watcherId} 不存在`);
             return;
         }
 
-        console.log(`正在移除监听器 ${watcherId} (${watcher.name})，序号: ${watcher.serialNumber}`);
+        // console.log(`正在移除监听器 ${watcherId} (${watcher.name})，序号: ${watcher.serialNumber}`);
 
         // 停止监听
         if (watcher.observer) {
@@ -1669,9 +1675,9 @@ class DOMAttributeWatcher {
             const currentId = watcher.element.getAttribute('data-dom-watcher-id');
             if (currentId === watcher.uniqueId) {
                 watcher.element.removeAttribute('data-dom-watcher-id');
-                console.log(`已移除元素标识: ${watcher.uniqueId}`);
+                // console.log(`已移除元素标识: ${watcher.uniqueId}`);
             } else {
-                console.log(`元素标识已变化，跳过清理。当前: ${currentId}, 要移除: ${watcher.uniqueId}`);
+                // console.log(`元素标识已变化，跳过清理。当前: ${currentId}, 要移除: ${watcher.uniqueId}`);
             }
         }
 
@@ -1727,24 +1733,24 @@ class DOMAttributeWatcher {
             watcher.observer.disconnect();
         }
 
-        console.log(`开始监听 ${watcher.name} (ID: ${watcher.id}, 序号: ${watcher.serialNumber})`);
-        console.log(`唯一标识: ${watcher.uniqueId}`);
+        // console.log(`开始监听 ${watcher.name} (ID: ${watcher.id}, 序号: ${watcher.serialNumber})`);
+        // console.log(`唯一标识: ${watcher.uniqueId}`);
 
         // 优先使用唯一属性查找元素
         let element = null;
         if (watcher.uniqueId) {
             element = document.querySelector(`[data-dom-watcher-id="${watcher.uniqueId}"]`);
-            console.log(`通过唯一标识找到元素:`, element);
+            // console.log(`通过唯一标识找到元素:`, element);
         }
 
         // 如果唯一属性找不到，回退到原始选择器
         if (!element) {
-            console.log(`唯一标识未找到，尝试原始选择器: ${watcher.originalSelector}`);
+            // console.log(`唯一标识未找到，尝试原始选择器: ${watcher.originalSelector}`);
             element = this.findElementBySelector(watcher.originalSelector);
             if (element) {
                 // 重新添加唯一标识
                 element.setAttribute('data-dom-watcher-id', watcher.uniqueId);
-                console.log(`通过原始选择器找到元素，重新添加标识: ${watcher.uniqueId}`);
+                // console.log(`通过原始选择器找到元素，重新添加标识: ${watcher.uniqueId}`);
             }
         }
 
@@ -1755,11 +1761,11 @@ class DOMAttributeWatcher {
         // 验证元素唯一性
         const allElementsWithId = document.querySelectorAll(`[data-dom-watcher-id="${watcher.uniqueId}"]`);
         if (allElementsWithId.length > 1) {
-            console.warn(`警告：找到多个元素使用相同标识 ${watcher.uniqueId}，数量: ${allElementsWithId.length}`);
+            // console.warn(`警告：找到多个元素使用相同标识 ${watcher.uniqueId}，数量: ${allElementsWithId.length}`);
         }
 
         watcher.element = element;
-        console.log(`监听器 ${watcher.name} 已绑定到元素:`, element);
+        // console.log(`监听器 ${watcher.name} 已绑定到元素:`, element);
 
         // 获取初始值
         let lastValue;
@@ -1880,19 +1886,24 @@ class DOMAttributeWatcher {
 
     // 简化的消息发送方法，支持popup、独立侧边栏和浮层面板通信
     broadcastMessage(message) {
-        // 发送到popup和独立侧边栏
-        try {
-            chrome.runtime.sendMessage(message);
-        } catch (error) {
-        }
-
-        // 发送到浮层面板
+        // 发送到浮层面板（优先，因为总是可用）
         try {
             window.postMessage({
                 type: 'DOM_WATCHER_MESSAGE',
                 data: message
             }, '*');
         } catch (error) {
+            // console.error('发送消息到浮层面板失败:', error);
+        }
+
+        // 发送到popup和独立侧边栏（仅在可用时）
+        try {
+            chrome.runtime.sendMessage(message).catch(error => {
+                // 静默处理连接错误，这是正常的
+                // // console.log('Popup不可用，跳过发送:', error.message);
+            });
+        } catch (error) {
+            // 静默处理
         }
     }
 }
