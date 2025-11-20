@@ -350,6 +350,11 @@ class SimpleFloatingPanel {
             overlay.style.display = 'block';
 
             if (element && element !== overlay) {
+                // 为元素添加临时选择标识
+                const tempId = `selected-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+                element.setAttribute('data-dom-watcher-selected', tempId);
+                console.log('浮层面板：为元素添加临时标识:', tempId, element);
+
                 this.selectElement(element);
             }
 
@@ -380,17 +385,25 @@ class SimpleFloatingPanel {
         // 清理所有边框样式
         this.clearAllHighlights();
 
+        // 检查元素是否有临时选择标识
+        const tempId = element.getAttribute('data-dom-watcher-selected');
+        console.log('浮层面板：发现临时选择标识:', tempId);
+
         const elementInfo = {
             tagName: element.tagName.toLowerCase(),
             cssSelector: this.generateSelector(element),
+            tempId: tempId,  // 添加临时标识
             attributes: {}
         };
 
         // 获取属性
         for (let attr of element.attributes) {
-            elementInfo.attributes[attr.name] = attr.value;
+            if (attr.name !== 'data-dom-watcher-selected') {  // 过滤临时标识
+                elementInfo.attributes[attr.name] = attr.value;
+            }
         }
 
+        console.log('浮层面板：元素信息:', elementInfo);
         this.showAddDialog(elementInfo);
     }
 
@@ -531,7 +544,7 @@ class SimpleFloatingPanel {
 
                 // 自动添加监听器
                 const name = `${elementInfo.tagName}_${selectedAttribute}`;
-                this.addWatcher(elementInfo.cssSelector, selectedAttribute, name);
+                this.addWatcher(elementInfo.cssSelector, selectedAttribute, name, elementInfo.tempId);
 
                 // 关闭对话框
                 document.body.removeChild(dialog);
@@ -551,13 +564,15 @@ class SimpleFloatingPanel {
         });
     }
 
-    async addWatcher(selector, attribute, name) {
+    async addWatcher(selector, attribute, name, tempId = null) {
         try {
+            console.log('浮层面板：添加监听器', { selector, attribute, name, tempId });
 
             const response = await this.sendMessage('addWatcher', {
                 elementSelector: selector,
                 attribute: attribute,
-                name: name
+                name: name,
+                tempId: tempId  // 传递临时标识
             });
 
             if (response && response.success) {
@@ -582,6 +597,8 @@ class SimpleFloatingPanel {
         const listContainer = document.getElementById('watcherList');
         const watcherCount = document.getElementById('watcherCount');
 
+        console.log(`浮层面板：更新监听器列表，当前数量: ${this.watchers.size}`);
+
         if (!listContainer) return;
 
         // 更新计数器
@@ -594,9 +611,16 @@ class SimpleFloatingPanel {
             return;
         }
 
+        console.log('浮层面板：监听器数据:', Array.from(this.watchers.values()).map(w => ({
+            id: w.id,
+            name: w.name,
+            serialNumber: w.serialNumber
+        })));
+
         // 使用存储的序号
         const html = Array.from(this.watchers.values()).map(watcher => {
             const number = watcher.serialNumber || '?';
+            console.log(`浮层面板：渲染监听器 ${watcher.name}, 序号: ${watcher.serialNumber}`);
             return `
                 <div class="watcher-item ${watcher.isWatching ? 'active' : ''}" style="position: relative;">
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
@@ -901,6 +925,7 @@ class SimpleFloatingPanel {
             case 'watcherAdded':
                 // 更新前端监听器数据，确保包含序号
                 if (message.watcher && message.watcher.id) {
+                    console.log('浮层面板：收到watcherAdded消息:', message.watcher);
                     this.watchers.set(message.watcher.id, message.watcher);
                 }
                 this.updateWatcherList();
@@ -913,18 +938,44 @@ class SimpleFloatingPanel {
 
     async loadInitialData() {
         try {
-            const response = await this.sendMessage('getStatus');
+            console.log('浮层面板：开始加载初始数据...');
+
+            // 检查通信是否可用
+            if (!window.domWatcher) {
+                console.log('浮层面板：等待通信脚本加载...');
+                // 等待通信脚本加载
+                await new Promise(resolve => {
+                    const checkInterval = setInterval(() => {
+                        if (window.domWatcher) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
+            console.log('浮层面板：获取状态中...');
+            // 从内容脚本获取当前状态
+            const response = await window.domWatcher.sendMessage('getStatus');
+            console.log('浮层面板：获取到状态响应:', response);
+
             if (response && response.watchers) {
+                console.log('浮层面板：更新监听器数据，数量:', response.watchers.length);
+                // 更新监听器数据
+                this.watchers.clear();
                 response.watchers.forEach(watcher => {
+                    console.log(`浮层面板：添加监听器 ${watcher.id}, 序号: ${watcher.serialNumber}, 名称: ${watcher.name}`);
                     this.watchers.set(watcher.id, watcher);
                 });
-                this.updateWatcherList();
+            } else {
+                console.log('浮层面板：没有找到监听器数据');
             }
-            if (response && response.logs) {
-                this.logs = response.logs;
-                this.updateLogDisplay();
-            }
+
+            // 更新显示
+            this.updateWatcherList();
+            this.updateLogDisplay();
         } catch (error) {
+            console.error('浮层面板：加载初始数据失败:', error);
         }
     }
 }
